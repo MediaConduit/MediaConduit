@@ -3,7 +3,7 @@
  * Manages generation jobs and their status
  */
 
-import { GenerationResult, JobStatus } from '../../../media/types/provider';
+import { GenerationResult, JobStatus } from '../../../../media/types/provider';
 
 export interface Job {
   id: string;

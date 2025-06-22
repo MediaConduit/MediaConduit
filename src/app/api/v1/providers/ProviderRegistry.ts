@@ -3,7 +3,7 @@
  * Singleton registry for managing all media providers
  */
 
-import { MediaProvider, ProviderRegistry as IProviderRegistry, MediaCapability } from '../../../media/types/provider';
+import { MediaProvider, ProviderRegistry as IProviderRegistry, MediaCapability } from '../../../../media/types/provider';
 
 class ProviderRegistry implements IProviderRegistry {
   private static instance: ProviderRegistry;
