@@ -1,0 +1,35 @@
+name: "zonos-service"
+version: "1.0.0"
+description: "Zonos TTS service with Gradio interface"
+
+docker:
+  composeFile: "docker-compose.yml"
+  serviceName: "zonos"
+  image: "zonos-zonos:latest"
+  ports: [7860]
+  healthCheck:
+    url: "http://localhost:7860/"
+    interval: "30s"
+    timeout: "10s"
+    retries: 5
+  environment:
+    NVIDIA_VISIBLE_DEVICES: "0"
+    GRADIO_SHARE: "True"
+    HF_HOME: "/root/.cache/huggingface"
+  volumes:
+    - "huggingface_cache:/root/.cache/huggingface"
+
+capabilities:
+  - "text-to-audio"
+  - "speech-synthesis"
+  - "voice-conditioning"
+
+requirements:
+  gpu: true
+  memory: "6GB"
+  cpu: "2.0"
+
+metadata:
+  repository: "https://github.com/mediaconduit/zonos-service"
+  documentation: "README.md"
+  license: "MIT"

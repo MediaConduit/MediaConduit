@@ -1,0 +1,32 @@
+name: "ollama-service"
+version: "1.0.0"
+description: "Ollama local LLM inference service"
+
+docker:
+  composeFile: "docker-compose.yml"
+  serviceName: "ollama"
+  image: "ollama/ollama:latest"
+  ports: [11434]
+  healthCheck:
+    url: "http://localhost:11434/api/tags"
+    interval: "30s"
+    timeout: "10s"
+    retries: 5
+  environment: {}
+  volumes:
+    - "ollama_data:/root/.ollama"
+
+capabilities:
+  - "text-to-text"
+  - "llm-inference"
+  - "chat-completion"
+
+requirements:
+  gpu: true
+  memory: "8GB"
+  cpu: "4.0"
+
+metadata:
+  repository: "https://github.com/mediaconduit/ollama-service"
+  documentation: "README.md"
+  license: "MIT"

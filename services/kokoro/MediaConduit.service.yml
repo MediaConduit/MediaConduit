@@ -1,0 +1,36 @@
+name: "kokoro-service"
+version: "1.0.0"
+description: "Kokoro TTS service with FastAPI interface"
+
+docker:
+  composeFile: "docker-compose.yml"
+  serviceName: "kokoro-tts-server"
+  image: "kprinssu/kokoro-fastapi:latest"
+  ports: [8005]
+  healthCheck:
+    url: "http://localhost:8880/health"
+    interval: "10s"
+    timeout: "5s"
+    retries: 3
+  environment:
+    CUDA_VISIBLE_DEVICES: "0"
+    PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
+  volumes:
+    - "./models:/app/models"
+    - "./audio_cache:/app/audio_cache"
+    - "./temp:/app/temp"
+
+capabilities:
+  - "text-to-audio"
+  - "speech-synthesis"
+  - "japanese-tts"
+
+requirements:
+  gpu: true
+  memory: "2GB"
+  cpu: "1.0"
+
+metadata:
+  repository: "https://github.com/mediaconduit/kokoro-service"
+  documentation: "README.md"
+  license: "MIT"
