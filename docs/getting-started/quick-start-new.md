@@ -1,8 +1,8 @@
-# Prizm Quick Start Guide
+# mediaconduit Quick Start Guide
 
 ## 🎯 Overview
 
-This guide will help you get Prizm up and running quickly. Prizm is a comprehensive TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture.
+This guide will help you get mediaconduit up and running quickly. mediaconduit is a comprehensive TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture.
 
 ## 📋 Prerequisites
 
@@ -16,7 +16,7 @@ This guide will help you get Prizm up and running quickly. Prizm is a comprehens
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd prizm
+cd mediaconduit
 ```
 
 ### 2. Install Dependencies
@@ -78,7 +78,7 @@ Create `test-basic.ts`:
 import { TogetherProvider } from './src/media/providers/together';
 
 async function testBasicConnection() {
-  console.log('🧪 Testing Prizm Basic Setup...\n');
+  console.log('🧪 Testing mediaconduit Basic Setup...\n');
   
   // Test provider creation (no API key needed for this)
   const provider = new TogetherProvider();
@@ -111,7 +111,7 @@ async function testAssetLoading() {
   
   // Create a simple test file
   const testFile = 'test.txt';
-  fs.writeFileSync(testFile, 'Hello, Prizm!');
+  fs.writeFileSync(testFile, 'Hello, mediaconduit!');
   
   try {
     // Load asset with automatic role detection
@@ -193,7 +193,7 @@ async function testRealAPI() {
           console.log('🚀 Testing with free model:', freeTextModel.name);
           const model = await provider.createTextToTextModel(freeTextModel.id);
           
-          const input = new Text('Hello, Prizm!');
+          const input = new Text('Hello, mediaconduit!');
           const result = await model.transform(input);
           
           console.log('✅ Generated text:', result.content.substring(0, 100) + '...');
@@ -372,7 +372,7 @@ const result = await composer.transform(ffmpegModel);
 
 ## 🎯 What's Next?
 
-Now that you have Prizm running, explore these areas:
+Now that you have mediaconduit running, explore these areas:
 
 1. **[Provider System](../architecture/provider-system.md)**: Learn about the multi-provider architecture
 2. **[Asset System](../architecture/asset-system.md)**: Understand smart asset loading and roles
@@ -389,4 +389,4 @@ For production deployment:
 4. **Monitoring**: Set up health checks and monitoring
 5. **Security**: Secure API keys and service endpoints
 
-Ready to build amazing media applications with Prizm! 🎉
+Ready to build amazing media applications with mediaconduit! 🎉

@@ -125,10 +125,10 @@ async function testAllFalAiModels() {
       const textToAudioModel = await provider.createTextToAudioModel(audioModel.id);
       console.log(`✅ Created model: ${audioModel.id}`);
         const speechText = new Text(
-        'Welcome to Prizm, the future of AI-powered media generation.',
+        'Welcome to MediaConduit, the future of AI-powered media generation.',
         'en',
         1.0,
-        { content: 'Welcome to Prizm, the future of AI-powered media generation.' }
+        { content: 'Welcome to MediaConduit, the future of AI-powered media generation.' }
       );
       console.log(`📝 Text: "${speechText.metadata?.content || 'Unknown text'}"`);
       

@@ -30,7 +30,7 @@ This document summarizes all documentation updates made to reflect the new Dynam
 - **Added**: Provider implementation examples
 - **Added**: Usage and publishing instructions
 - **Added**: Creating distributed services guide
-- **Added**: `prizm.service.yml` configuration examples
+- **Added**: `mediaconduit.service.yml` configuration examples
 
 #### **4. docs/AWESOME_EXAMPLES.md**
 - **Added**: "Dynamic Loading Examples" section
@@ -101,7 +101,7 @@ This document summarizes all documentation updates made to reflect the new Dynam
 - **Benefits**: Service isolation, auto-configuration, specialization
 
 ### **📋 Configuration-Driven Services**
-- **What**: Services defined by `prizm.service.yml` files
+- **What**: Services defined by `mediaconduit.service.yml` files
 - **How**: Clone repo → Read YAML → Configure DockerService
 - **Benefits**: Simple, secure, maintainable
 
@@ -200,7 +200,7 @@ const provider = await getProvider(
 
 ## 🚀 **Impact**
 
-The documentation now fully reflects Prizm's evolution into a **dynamic, Go-like module loading ecosystem** while maintaining all existing functionality. Users can:
+The documentation now fully reflects mediaconduit's evolution into a **dynamic, Go-like module loading ecosystem** while maintaining all existing functionality. Users can:
 
 1. **Quickly understand** the dynamic loading capabilities
 2. **Get started** with practical examples
@@ -208,4 +208,4 @@ The documentation now fully reflects Prizm's evolution into a **dynamic, Go-like
 4. **Reference** complete API documentation
 5. **Contribute** to the decentralized ecosystem
 
-The documentation successfully positions Prizm as the **most advanced and extensible AI media processing platform** with enterprise-grade dynamic loading capabilities.
+The documentation successfully positions mediaconduit as the **most advanced and extensible AI media processing platform** with enterprise-grade dynamic loading capabilities.

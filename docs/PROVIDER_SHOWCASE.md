@@ -1,4 +1,4 @@
-# 🌟 Prizm - Multi-Provider AI Pipeline Showcase
+# 🌟 mediaconduit - Multi-Provider AI Pipeline Showcase
 
 Welcome to the most advanced multi-provider AI media transformation SDK! This showcase demonstrates the incredible power of unified AI provider orchestration, complex multi-step pipelines, and seamless integration across dozens of AI services.
 
@@ -69,19 +69,19 @@ const researchPipeline = Pipeline.create()
   .execute();
 ```
 
-## 🎯 What Makes Prizm Special?
+## 🎯 What Makes mediaconduit Special?
 
 ### 🚀 **15+ AI Providers, One Interface**
 ```typescript
-// Access 500+ AI models through Prizm's layered architecture
+// Access 500+ AI models through mediaconduit's layered architecture
 
 // Core SDK - Maximum Control
-import { ProviderRegistry } from 'prizm';
+import { ProviderRegistry } from 'mediaconduit';
 const registry = ProviderRegistry.getInstance();
 const providers = await registry.getAvailableProviders();
 
 // Fluent API - Zero Config
-import { $ } from 'prizm';
+import { $ } from 'mediaconduit';
 const result = await $("replicate")("flux-schnell")("Amazing content");
 
 // REST API - Language Agnostic
@@ -919,7 +919,7 @@ const report = await factory.generateDailyReport();
 console.log(`📊 Processed ${report.totalJobs} jobs with ${report.successRate}% success rate`);
 ```
 
-## 🌟 Why Prizm is Revolutionary
+## 🌟 Why mediaconduit is Revolutionary
 
 ### 🎯 **Unified Interface, Unlimited Possibilities**
 - **15+ AI providers** accessible through identical APIs
@@ -944,7 +944,7 @@ console.log(`📊 Processed ${report.totalJobs} jobs with ${report.successRate}%
 
 ## 🎬 Ready to Create Something Epic?
 
-Prizm isn't just a media processing platform - it's a creative powerhouse that makes the impossible possible. From simple one-liners to complex multi-provider pipelines, you can build anything you imagine.
+mediaconduit isn't just a media processing platform - it's a creative powerhouse that makes the impossible possible. From simple one-liners to complex multi-provider pipelines, you can build anything you imagine.
 
 **Start with a single provider, scale to the entire AI ecosystem! 🚀**
 

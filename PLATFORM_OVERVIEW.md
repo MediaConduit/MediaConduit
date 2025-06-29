@@ -1,8 +1,8 @@
-# 🌟 Prizm - Complete SDK Overview
+# 🌟 MediaConduit - Complete SDK Overview
 
-## 🎯 **What Is Prizm?**
+## 🎯 **What Is MediaConduit?**
 
-Prizm is the **TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture**. It offers multiple interface layers from zero-config one-liners to maximum-control APIs.
+MediaConduit is the **TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture**. It offers multiple interface layers from zero-config one-liners to maximum-control APIs.
 
 Think of it as **the ultimate media transformation SDK** where you can:
 - Access **any AI provider** through identical interfaces
@@ -10,7 +10,7 @@ Think of it as **the ultimate media transformation SDK** where you can:
 - Use **layered APIs** from one-liners to enterprise-grade control
 - Scale from **prototype to production** without architectural changes
 
-## 🚀 **Why Prizm is Revolutionary**
+## 🚀 **Why MediaConduit is Revolutionary**
 
 ### 🎪 **Layered Architecture Design**
 Instead of learning 15 different APIs, you get **10 layers** of abstraction:
@@ -39,7 +39,7 @@ const video = await $("runway")("gen-3")("Dragon flying through clouds");
 const audio = await $("chatterbox")("voice-clone")("Professional narration");
 ```
 
-### � **Smart Asset System**
+###  **Smart Asset System**
 Format-agnostic loading with automatic capability detection:
   .prepend(brandIntro)                    // Professional intro
   .compose(aiGeneratedContent)            // AI-generated main content
@@ -88,7 +88,7 @@ const transcript = await asset.asSpeech();  // Auto-transcribe
 
 ### 🐳 **Local Docker Services (Docker Compose Only)**
 
-Prizm integrates seamlessly with local services managed purely via Docker Compose. This ensures robust, isolated, and easily deployable local processing capabilities.
+MediaConduit integrates seamlessly with local services managed purely via Docker Compose. This ensures robust, isolated, and easily deployable local processing capabilities.
 
 - **FFMPEG**: Professional video processing and composition
 - **Chatterbox**: Text-to-speech with voice cloning
@@ -273,7 +273,7 @@ custom-service:
     - MODEL_CACHE_DIR=/app/models
 ```
 
-## 🎉 **Why Choose Prizm?**
+## 🎉 **Why Choose MediaConduit?**
 
 ### 🚀 **Unmatched Capabilities**
 - **15+ providers** in one unified platform
@@ -303,16 +303,10 @@ custom-service:
 
 ```bash
 # Clone and set up
-git clone https://github.com/your-org/prizm
-cd prizm
-pnpm install
-
-# Add your API keys
-echo "FALAI_API_KEY=your_key" >> .env.local
-echo "OPENROUTER_API_KEY=your_key" >> .env.local
-
-# Start creating magic!
-npm run start
+git clone https://github.com/your-org/mediaconduit
+cd mediaconduit
+npm install
+npm run dev
 ```
 
 ### 📚 **Explore the Documentation**
@@ -327,7 +321,7 @@ npm run start
 
 ## 🎬 **Ready to Create Something Epic?**
 
-Prizm isn't just another AI SDK - it's **the foundation for the next generation of AI-powered media creation**. Whether you're building:
+MediaConduit isn't just another AI SDK - it's **the foundation for the next generation of AI-powered media creation**. Whether you're building:
 
 - 🎭 **Creative tools** for artists and content creators
 - 🏢 **Enterprise solutions** for marketing teams
@@ -335,6 +329,6 @@ Prizm isn't just another AI SDK - it's **the foundation for the next generation 
 - 🌍 **Global applications** with multi-language support
 - 🚀 **Next-generation products** that push the boundaries
 
-**Prizm gives you the power to make it happen!**
+**MediaConduit provides the unified platform to make it happen!**
 
 *From one line of code to Hollywood-level productions - the future of AI media processing is here! 🌟*

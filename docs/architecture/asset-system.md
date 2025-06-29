@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-The Prizm Asset & Role System provides intelligent, format-agnostic media loading with automatic capability detection. The system uses role-based mixins to dynamically add functionality to assets based on their format, enabling type-safe transformations across different media types.
+The mediaconduit Asset & Role System provides intelligent, format-agnostic media loading with automatic capability detection. The system uses role-based mixins to dynamically add functionality to assets based on their format, enabling type-safe transformations across different media types.
 
 ## 🏗️ Core Architecture
 
@@ -11,8 +11,8 @@ The Prizm Asset & Role System provides intelligent, format-agnostic media loadin
 The `SmartAssetFactory` and `AssetLoader` provide the main entry point for loading media assets:
 
 ```typescript
-// Single entry point for any media format - Layer 5 of Prizm SDK
-import { AssetLoader } from 'prizm';
+// Single entry point for any media format - Layer 5 of mediaconduit SDK
+import { AssetLoader } from 'mediaconduit';
 
 const asset = AssetLoader.load('video.mp4');  // Auto-detects as Video + Audio
 const video = await asset.asVideo();           // Access video functionality
@@ -33,7 +33,7 @@ Format Detection → Role Assignment → Capability Enhancement
 
 ## 🎭 Role System
 
-Prizm uses a role-based system to dynamically assign capabilities to assets. This is achieved through TypeScript mixins that implement specific role interfaces.
+mediaconduit uses a role-based system to dynamically assign capabilities to assets. This is achieved through TypeScript mixins that implement specific role interfaces.
 
 ### Core Role Interfaces (`src/media/assets/roles/index.ts`)
 

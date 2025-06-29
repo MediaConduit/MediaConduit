@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-The ChatterboxTTSDockerService provides high-quality text-to-speech conversion using the Chatterbox TTS engine with CUDA acceleration. It implements both the MediaTransformer and LocalServiceManager interfaces for seamless integration within the Prizm SDK ecosystem and Docker self-management.
+The ChatterboxTTSDockerService provides high-quality text-to-speech conversion using the Chatterbox TTS engine with CUDA acceleration. It implements both the MediaTransformer and LocalServiceManager interfaces for seamless integration within the mediaconduit SDK ecosystem and Docker self-management.
 
 ## 🌐 **Dynamic Service Loading (June 2025)**
 
@@ -10,7 +10,7 @@ Chatterbox TTS can now be used as a dynamic service dependency:
 
 ### **As a Distributed Service**
 ```yaml
-# prizm.service.yml for Chatterbox TTS
+# mediaconduit.service.yml for Chatterbox TTS
 name: chatterbox-tts
 version: "1.0.0"
 description: "High-quality neural text-to-speech with CUDA acceleration"
@@ -74,7 +74,7 @@ const clonedVoice = await $$(voiceProvider)("clone-voice")(audioSample);
 - **🐳 Docker Self-Management**: Automatic container lifecycle management
 - **📊 Progress Monitoring**: Real-time progress updates during generation
 - **🔄 Voice Cloning**: Support for custom voice models (future feature)
-- **🎯 Prizm Integration**: Full compatibility with Fluent API and Core SDK
+- **🎯 mediaconduit Integration**: Full compatibility with Fluent API and Core SDK
 
 ## 📋 Service Information
 
@@ -177,7 +177,7 @@ console.log(`Duration: ${result.duration} seconds`);
 // Using the unified MediaTransformer interface
 const input = {
   type: 'text' as const,
-  data: 'Welcome to Prizm!'
+  data: 'Welcome to mediaconduit!'
 };
 
 const output = await ttsService.transform(input, 'audio', {

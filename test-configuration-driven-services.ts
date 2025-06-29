@@ -3,7 +3,7 @@
  * 
  * Simple approach:
  * 1. Clone repo from GitHub URL
- * 2. Read prizm.service.yml configuration  
+ * 2. Read MediaConduit.service.yml configuration  
  * 3. Return DockerService configured with that yml
  */
 
@@ -20,7 +20,7 @@ async function testConfigurationDrivenServices() {
   console.log('❌ No more dynamic code loading');
   console.log('✅ Simple configuration-driven approach:');
   console.log('   1. Clone repo from GitHub URL');
-  console.log('   2. Read prizm.service.yml');
+  console.log('   2. Read MediaConduit.service.yml');
   console.log('   3. Return DockerService configured with that yml');
 
   console.log('\n🔧 EXAMPLE PROCESS:');
@@ -34,10 +34,10 @@ async function testConfigurationDrivenServices() {
   console.log('');
   console.log('ServiceRegistry process:');
   console.log('1. 📥 Clone: git clone https://github.com/company/enhanced-ffmpeg-service');
-  console.log('2. 📋 Read: prizm.service.yml configuration');
+  console.log('2. 📋 Read: MediaConduit.service.yml configuration');
   console.log('3. 🐳 Return: ConfigurableDockerService with that config');
 
-  console.log('\n📄 EXAMPLE prizm.service.yml:');
+  console.log('\n📄 EXAMPLE MediaConduit.service.yml:');
   console.log('==============================');
   console.log(`name: enhanced-ffmpeg-service
 version: "2.1.0"
@@ -69,7 +69,7 @@ requirements:
   console.log('============================');
   console.log('✅ ConfigurableDockerService implements DockerService interface');
   console.log('✅ Uses DockerComposeService internally for docker-compose operations');
-  console.log('✅ Automatically configures from prizm.service.yml');
+  console.log('✅ Automatically configures from MediaConduit.service.yml');
   console.log('✅ Provides all standard service methods:');
   console.log('   - startService() / stopService() / restartService()');
   console.log('   - getServiceStatus() / isServiceHealthy() / waitForHealthy()');
@@ -87,7 +87,7 @@ requirements:
   console.log('\n📦 REPOSITORY STRUCTURE:');
   console.log('=========================');
   console.log('enhanced-ffmpeg-service/');
-  console.log('├── prizm.service.yml     # Service configuration (REQUIRED)');
+  console.log('├── MediaConduit.service.yml     # Service configuration (REQUIRED)');
   console.log('├── docker-compose.yml    # Docker service definition');
   console.log('├── Dockerfile           # Custom image (optional)');
   console.log('├── configs/             # Service-specific configs');
@@ -100,7 +100,7 @@ requirements:
   console.log('// In HuggingFaceDockerProvider.configure()');
   console.log('if (config.serviceUrl) {');
   console.log('  const dockerService = await serviceRegistry.getService(config.serviceUrl);');
-  console.log('  // Service is automatically configured from prizm.service.yml');
+  console.log('  // Service is automatically configured from MediaConduit.service.yml');
   console.log('  const started = await dockerService.startService();');
   console.log('  const healthy = await dockerService.waitForHealthy();');
   console.log('  // Provider auto-configures from service info');

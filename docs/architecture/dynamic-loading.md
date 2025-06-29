@@ -1,6 +1,6 @@
 # Dynamic Provider & Service Loading Architecture
 
-Prizm's dynamic loading system enables Go-like module loading for providers and services from URLs, creating a decentralized ecosystem for AI/media processing capabilities.
+mediaconduit's dynamic loading system enables Go-like module loading for providers and services from URLs, creating a decentralized ecosystem for AI/media processing capabilities.
 
 ## 🎯 Overview
 
@@ -118,7 +118,7 @@ await provider.configure({
 ```
 my-ai-provider/
 ├── package.json          # Entry point and dependencies
-├── prizm.config.json     # Optional Prizm-specific metadata
+├── mediaconduit.config.json     # Optional mediaconduit-specific metadata
 ├── src/
 │   └── index.ts         # Provider implementation
 ├── dist/
@@ -131,7 +131,7 @@ my-ai-provider/
 ```
 my-docker-service/
 ├── package.json          # Entry point and dependencies
-├── prizm.config.json     # Optional service metadata
+├── mediaconduit.config.json     # Optional service metadata
 ├── docker-compose.yml    # Service definition
 ├── src/
 │   └── index.ts         # Service implementation

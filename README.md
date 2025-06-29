@@ -1,8 +1,8 @@
-# 🚀 Prizm - The Ultimate AI Media Processing Platform
+# 🚀 MediaConduit - The Ultimate AI Media Processing Platform
 
-The most advanced multi-provider AI media processing platform ever built! Prizm unifies 15+ AI ### 3. Fluent API (Zero Config)
+The most advanced multi-provider AI media processing platform ever built! MediaConduit unifies 15+ AI ### 3. Fluent API (Zero Config)
 ```typescript
-import { $$ } from 'prizm';
+import { $$ } from 'mediaconduit';
 
 // NEW: Single await pattern (cleanest)
 const speech = await $$("elevenlabs")("voice-id")("Hello world!");
@@ -99,7 +99,7 @@ POST /api/v1/transform/elevenlabs/voice-id
 
 ## 🏗️ **Layered Architecture**
 
-**Prizm provides the unified platform to make it happen!**
+**mediaconduit provides the unified platform to make it happen!**
 
 1. **Dynamic Loading** - Go-like module loading: `getProvider('github:owner/repo@v1.0.0')`
 2. **Provider → Service** - Dynamic service dependency management
@@ -139,7 +139,7 @@ POST /api/v1/transform/elevenlabs/voice-id
 
 ### 1. Dynamic Provider Loading (NEW!)
 ```typescript
-import { getProvider } from 'prizm';
+import { getProvider } from 'mediaconduit';
 
 // Load provider from GitHub
 const provider = await getProvider('https://github.com/company/custom-provider');
@@ -156,7 +156,7 @@ const result = await provider.getModel('custom-model').transform(input);
 
 ### 2. Core SDK Usage
 ```typescript
-import { ProviderRegistry, Text } from 'prizm';
+import { ProviderRegistry, Text } from 'mediaconduit';
 
 const registry = ProviderRegistry.getInstance();
 const provider = await registry.getProvider('elevenlabs');
@@ -166,7 +166,7 @@ const result = await model.transform(Text.fromString("Hello world!"), options);
 
 ### 3. Fluent API (Zero Config)
 ```typescript
-import { $$ } from 'prizm';
+import { $$ } from 'mediaconduit';
 
 // NEW: Single await pattern (cleanest)
 const speech = await $$("elevenlabs")("voice-id")("Hello world!");
@@ -179,7 +179,7 @@ const speechLegacy = await (await $("elevenlabs")("voice-id"))("Hello world!");
 
 ### 4. Smart Asset Loading
 ```typescript
-import { AssetLoader } from 'prizm';
+import { AssetLoader } from 'mediaconduit';
 
 const asset = AssetLoader.load('video.mp4');  // Auto-detects format + roles
 const video = await asset.asVideo();           // Type-safe video access
@@ -197,9 +197,9 @@ curl -X POST http://localhost:3000/api/v1/transform/replicate/flux-schnell \
   -d '{"capability": "text-to-image", "input": "A majestic dragon"}'
 ```
 
-## 🏗️ **Prizm SDK Architecture**
+## 🏗️ **mediaconduit SDK Architecture**
 
-**Prizm provides the unified platform to make it happen!**
+**mediaconduit provides the unified platform to make it happen!**
 
 1. **Dynamic Loading** - Go-like module loading: `getProvider('github:owner/repo@v1.0.0')`
 2. **Provider → Service** - Dynamic service dependency management
@@ -256,11 +256,11 @@ const { jobId } = await fetch('/api/v1/transform/replicate/flux-schnell', {
 const result = await pollJobUntilComplete(jobId);
 ```
 
-## 📁 Prizm SDK Structure
+## 📁 mediaconduit SDK Structure
 
 ```
 src/
-├── media/                     # Core Prizm SDK
+├── media/                     # Core mediaconduit SDK
 │   ├── registry/             # Provider registry and bootstrapping
 │   ├── providers/            # Provider implementations
 │   │   ├── elevenlabs/      # ElevenLabs TTS provider package
@@ -299,13 +299,13 @@ services/                    # Docker service configurations
 
 ### NPM Package (Coming Soon)
 ```bash
-npm install prizm
+npm install mediaconduit
 ```
 
 ### Development Setup
 ```bash
-git clone https://github.com/your-org/prizm
-cd prizm
+git clone https://github.com/your-org/mediaconduit
+cd mediaconduit
 npm install
 npm run dev
 ```
@@ -354,8 +354,8 @@ WHISPER_SERVICE_URL=http://localhost:9000
 
 #### � **AI Agent Integration**
 ```typescript
-// LangChain agent using Prizm for media capabilities
-import { ProviderRegistry } from 'prizm';
+// LangChain agent using mediaconduit for media capabilities
+import { ProviderRegistry } from 'mediaconduit';
 
 class MediaCapableAgent extends Agent {
   constructor() {
@@ -367,7 +367,7 @@ class MediaCapableAgent extends Agent {
     // Generate copy
     const copy = await this.generateCopy(description);
     
-    // Create visuals with Prizm
+    // Create visuals with mediaconduit
     const provider = await this.registry.getProvider('replicate');
     const model = await provider.getModel('flux-pro');
     const heroImage = await model.transform(copy, { aspect_ratio: "16:9" });
@@ -429,13 +429,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🌟 Star History
 
-⭐ **Star this repo** if Prizm helps your project!
+⭐ **Star this repo** if mediaconduit helps your project!
 
-[![Star History Chart](https://api.star-history.com/svg?repos=your-org/prizm&type=Date)](https://star-history.com/#your-org/prizm&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=your-org/mediaconduit&type=Date)](https://star-history.com/#your-org/mediaconduit&Date)
 
 ---
 
-**Built with ❤️ by the Prizm Team**
+**Built with ❤️ by the mediaconduit Team**
 
 *Making AI media transformation as simple as one line of code.*
 ```bash

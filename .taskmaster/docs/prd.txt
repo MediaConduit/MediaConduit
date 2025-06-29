@@ -1,8 +1,8 @@
-# Prizm - Media Transformation API for AI Agent Workflows (Updated June 2025)
+# MediaConduit - Media Transformation API for AI Agent Workflows (Updated June 2025)
 
-## 🎯 PRIZM: MEDIA TRANSFORMATION SDK
+## 🎯 MEDIACONDUIT: MEDIA TRANSFORMATION SDK
 
-**Prizm is the TypeScript SDK that provides unified access to 15+ AI providers through a clean provider->model->transform architecture, with multiple interface layers from zero-config one-liners to maximum-control APIs.**
+**MediaConduit is the TypeScript SDK that provides unified access to 15+ AI providers through a clean provider->model->transform architecture, with multiple interface layers from zero-config one-liners to maximum-control APIs.**
 
 ### **Target Users: All Media-Enabled Applications**
 - **AI Agent Frameworks** (LangChain, AutoGen, custom agents)
@@ -12,7 +12,7 @@
 - **Production Applications** requiring enterprise-grade media infrastructure
 
 ### **Core Value Proposition**
-Prizm eliminates media transformation complexity through a layered SDK approach:
+MediaConduit eliminates media transformation complexity through a layered SDK approach:
 - **Zero Config**: One-liner fluent API that "just works"  
 - **Maximum Control**: Full provider/model/parameter access
 - **Language Agnostic**: REST API for any tech stack
@@ -20,7 +20,7 @@ Prizm eliminates media transformation complexity through a layered SDK approach:
 
 ```typescript
 // Core SDK Architecture - Maximum Control
-import { ProviderRegistry } from 'prizm';
+import { ProviderRegistry } from 'mediaconduit';
 
 const registry = ProviderRegistry.getInstance();
 const provider = await registry.getProvider('replicate');
@@ -28,7 +28,7 @@ const model = await provider.getModel('flux-pro');
 const result = await model.transform(textInput, options);
 
 // Fluent API - Zero Config "Just Works"
-import { $ } from 'prizm';
+import { $ } from 'mediaconduit';
 
 const result = await $("replicate")("flux-pro")(textInput, options);
 
@@ -41,14 +41,14 @@ const { jobId } = await fetch('/api/v1/transform/...');
 const result = await pollJob(jobId);
 ```
 
-## 🏗️ PRIZM SDK ARCHITECTURE - LAYERED APPROACH
+## 🏗️ MEDIACONDUIT SDK ARCHITECTURE - LAYERED APPROACH
 
 ### **Layer 1: Core SDK** (Maximum Control)
 The foundational provider->model->transform architecture:
 
 ```typescript
 // Core SDK - Full control over every aspect
-import { ProviderRegistry, MediaCapability } from 'prizm';
+import { ProviderRegistry, MediaCapability } from 'mediaconduit';
 
 const registry = ProviderRegistry.getInstance();
 await registry.initialize();
@@ -76,7 +76,7 @@ Beautiful one-liners that "just work":
 
 ```typescript
 // Fluent API - Zero configuration required
-import { $ } from 'prizm';
+import { $ } from 'mediaconduit';
 
 // One-liner magic
 const image = await $("replicate")("flux-schnell")(textInput);
@@ -124,7 +124,7 @@ Zero-config asset loading with automatic capability detection:
 
 ```typescript
 // Smart Asset Loading - Auto-detects any format
-import { AssetLoader } from 'prizm';
+import { AssetLoader } from 'mediaconduit';
 
 const asset = AssetLoader.load('video.mp4');  // Auto-detects: Video + Audio + Speech
 const video = await asset.asVideo();           // Type-safe video access
@@ -164,7 +164,7 @@ Safe runtime type checking for dynamic assets:
 
 ```typescript
 // Type-safe role checking
-import { hasVideoRole, hasAudioRole, hasTextRole } from 'prizm';
+import { hasVideoRole, hasAudioRole, hasTextRole } from 'mediaconduit';
 
 const asset = AssetLoader.load('unknown-file.???');
 
@@ -232,7 +232,7 @@ Comprehensive format support with extensible detection:
 
 ```typescript
 // Format detection and registry
-import { FORMAT_REGISTRY, detectFormat } from 'prizm';
+import { FORMAT_REGISTRY, detectFormat } from 'mediaconduit';
 
 const formatInfo = detectFormat('video.mp4');
 // { extension: 'mp4', mimeType: 'video/mp4', category: 'video', roles: ['video', 'audio', 'speech'] }
@@ -254,7 +254,7 @@ FORMAT_REGISTRY['xyz'] = {
 
 ### **Go-Like Module Loading for Providers and Services**
 
-Prizm now supports dynamic loading of providers and services from URLs, enabling a decentralized ecosystem similar to Go modules:
+MediaConduit now supports dynamic loading of providers and services from URLs, enabling a decentralized ecosystem similar to Go modules:
 
 ```typescript
 // Load providers dynamically from GitHub
@@ -321,7 +321,7 @@ await provider.configure({
 
 ## 🎯 COMPLETE SDK COVERAGE
 
-**Prizm provides every level from zero-config to maximum control:**
+**MediaConduit provides every level from zero-config to maximum control:**
 
 1. **Core SDK** - Full provider->model->transform control
 2. **Fluent API** - One-liner magic: `$("provider")("model")(input)`  

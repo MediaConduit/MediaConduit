@@ -29,14 +29,14 @@ async function testDynamicRegistries() {
   try {
     // Test dynamic provider URL parsing
     console.log('2. Testing URL parsing...');
-    const parsed = (providerRegistry as any).parseIdentifier('https://github.com/tsavo/prizm-ffmpeg-provider');
+    const parsed = (providerRegistry as any).parseIdentifier('https://github.com/tsavo/mediaconduit-ffmpeg-provider');
     console.log(`   ✅ URL parsed: ${JSON.stringify(parsed, null, 2)}`);
 
     // Test dynamic GitHub provider loading
     console.log('4. Testing dynamic GitHub provider loading...');
-    const githubProvider = await providerRegistry.getProvider('github:tsavo/prizm-ffmpeg-provider');
+    const githubProvider = await providerRegistry.getProvider('github:tsavo/mediaconduit-ffmpeg-provider');
     console.log(`   ✅ GitHub provider loaded: ${githubProvider.name} (${githubProvider.id})`);
-    if (githubProvider.id !== 'prizm-ffmpeg-provider') {
+    if (githubProvider.id !== 'mediaconduit-ffmpeg-provider') {
       throw new Error('GitHub provider ID mismatch');
     }
     if (githubProvider.type !== 'local') {
@@ -82,7 +82,7 @@ async function testDynamicRegistries() {
   try {
     // Test service identifier parsing
     console.log('3. Testing service URL parsing...');
-    const parsed = (serviceRegistry as any).parseIdentifier('github:tsavo/prizm-huggingface-service@v1.0.0');
+    const parsed = (serviceRegistry as any).parseIdentifier('github:tsavo/mediaconduit-huggingface-service@v1.0.0');
     console.log(`   ✅ Service URL parsed: ${JSON.stringify(parsed, null, 2)}`);
   } catch (error) {
     console.log(`   ❌ Service URL parsing failed: ${error.message}`);
@@ -105,7 +105,7 @@ async function testDynamicRegistries() {
   console.log('• ✅ Dynamic loading of Docker Compose services from URLs (GitHub, local files)');
   console.log('\nUsage Examples:');
   console.log(`• getProvider('ffmpeg')                                    // Static`);
-  console.log(`• getProvider('github:tsavo/prizm-ffmpeg-provider')        // GitHub Docker Service`);
+  console.log(`• getProvider('github:tsavo/mediaconduit-ffmpeg-provider')        // GitHub Docker Service`);
   console.log(`• getService('huggingface-docker')                        // Static`);
 }
 

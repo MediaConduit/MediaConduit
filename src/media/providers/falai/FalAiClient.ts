@@ -361,8 +361,8 @@ export class FalAiClient {
         headers: {
           'Authorization': `Bearer ${openRouterApiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://prizm.ai',
-          'X-Title': 'Prizm fal.ai Model Discovery'
+          'HTTP-Referer': 'https://MediaConduit.ai',
+          'X-Title': 'MediaConduit fal.ai Model Discovery'
         },
         body: JSON.stringify({
           model: 'deepseek/deepseek-chat:free', // FREE model only
@@ -597,8 +597,8 @@ Tags: ${model.tags?.join(', ') || 'None'}`
           headers: {
             'Authorization': `Bearer ${this.config.discovery.openRouterApiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://prizm.ai',
-            'X-Title': 'Prizm Model Discovery'
+            'HTTP-Referer': 'https://MediaConduit.ai',
+            'X-Title': 'MediaConduit Model Discovery'
           },
           body: JSON.stringify({
             model: 'deepseek/deepseek-chat:free',

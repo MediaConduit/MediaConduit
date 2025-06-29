@@ -1,8 +1,8 @@
-# Prizm SDK Architecture Overview
+# mediaconduit SDK Architecture Overview
 
 ## 🌐 **Dynamic Loading System (NEW - June 2025)**
 
-Prizm now features a Go-like module loading system that enables a decentralized ecosystem:
+mediaconduit now features a Go-like module loading system that enables a decentralized ecosystem:
 
 ### **Dynamic Provider Loading**
 ```typescript
@@ -14,7 +14,7 @@ const provider = await getProvider('file:///path/to/provider');   // Local
 
 ### **Configuration-Driven Services**
 ```typescript
-// Services defined by prizm.service.yml configuration
+// Services defined by mediaconduit.service.yml configuration
 await provider.configure({
   serviceUrl: 'github:company/gpu-service@v2.0.0',
   serviceConfig: { enableGPU: true, memory: '24GB' }
@@ -24,7 +24,7 @@ await provider.configure({
 ### **Ecosystem Architecture**
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                     Decentralized Prizm Ecosystem                           │
+│                     Decentralized mediaconduit Ecosystem                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  GitHub Providers  │  NPM Providers  │  Private Repos  │  Local Providers  │
 │                    │                  │                 │                   │
@@ -42,14 +42,14 @@ await provider.configure({
 │                         Provider → Service                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │   Providers request services via serviceUrl in configure()                 │
-│   ServiceRegistry loads prizm.service.yml configs from GitHub repos       │
+│   ServiceRegistry loads mediaconduit.service.yml configs from GitHub repos       │
 │   ConfigurableDockerService manages Docker Compose services               │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 🏗️ High-Level Architecture
 
-Prizm is built on a sophisticated layered architecture that provides unified access to 15+ AI providers through multiple interface layers. The system emphasizes:
+mediaconduit is built on a sophisticated layered architecture that provides unified access to 15+ AI providers through multiple interface layers. The system emphasizes:
 
 - **Layered Interface Design**: From zero-config one-liners to maximum-control APIs
 - **Provider-Centric Organization**: Each provider contains all related components
@@ -61,7 +61,7 @@ Prizm is built on a sophisticated layered architecture that provides unified acc
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          Prizm SDK Layers                                   │
+│                          mediaconduit SDK Layers                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Layer 12: Format Registry | Layer 11: Job Management | Layer 10: Provider Utils│
 ├─────────────────────────────────────────────────────────────────────────────┤

@@ -1,6 +1,6 @@
 # Documentation Cleanup Summary
 
-This document summarizes the documentation cleanup performed on the Prizm project to align documentation with the actual codebase.
+This document summarizes the documentation cleanup performed on the mediaconduit project to align documentation with the actual codebase.
 
 ## Changes Made
 
@@ -90,4 +90,4 @@ The documentation now accurately reflects:
 ### Created
 - `tests/README.md` (test organization guide)
 
-The documentation now provides an accurate reflection of the current Prizm media processing platform architecture and capabilities.
+The documentation now provides an accurate reflection of the current mediaconduit media processing platform architecture and capabilities.

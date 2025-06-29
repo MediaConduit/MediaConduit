@@ -1,6 +1,6 @@
 # 🔧 TypeScript Migration Guide
 
-This guide documents the recent TypeScript fixes and patterns you should use when working with Prizm providers.
+This guide documents the recent TypeScript fixes and patterns you should use when working with mediaconduit providers.
 
 ## 🚨 Common Issues Fixed
 

@@ -1,6 +1,6 @@
-# 🎯 Prizm - One-Liner Magic & Quick Examples
+# 🎯 mediaconduit - One-Liner Magic & Quick Examples
 
-The most elegant media transformation SDK ever built! Prizm makes complex AI operations as simple as a single function call while providing unlimited scalability and customization through its layered architecture.
+The most elegant media transformation SDK ever built! mediaconduit makes complex AI operations as simple as a single function call while providing unlimited scalability and customization through its layered architecture.
 
 ## ⚡ The Ultimate One-Liners
 
@@ -422,7 +422,7 @@ These one-liners are just the beginning! Each simple command opens the door to u
 
 ## ⚡ **Two Fluent API Patterns**
 
-Prizm now offers **two fluent API patterns** for maximum flexibility:
+mediaconduit now offers **two fluent API patterns** for maximum flexibility:
 
 ### **🆕 Single Await Pattern (Recommended)**
 ```typescript

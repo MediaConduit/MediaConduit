@@ -1,6 +1,6 @@
 # Provider Registry Deep Dive
 
-The `ProviderRegistry` is a core component of Prizm's architecture, acting as a central, singleton hub for managing all available AI `MediaProvider` implementations. It enables dynamic discovery and selection of providers based on their capabilities within the provider→model→transform architecture.
+The `ProviderRegistry` is a core component of mediaconduit's architecture, acting as a central, singleton hub for managing all available AI `MediaProvider` implementations. It enables dynamic discovery and selection of providers based on their capabilities within the provider→model→transform architecture.
 
 ## 🚀 NEW: Dynamic Provider Loading (June 2025)
 
@@ -152,7 +152,7 @@ public async getProvidersByCapability(capability: MediaCapability): Promise<Medi
 
 ### `findBestProvider(capability: MediaCapability, criteria?: ProviderCriteria)`
 
-Intelligently selects the most suitable provider based on a desired capability and optional criteria (e.g., cost, speed, specific model features). This method is crucial for Prizm's cost optimization and intelligent routing.
+Intelligently selects the most suitable provider based on a desired capability and optional criteria (e.g., cost, speed, specific model features). This method is crucial for mediaconduit's cost optimization and intelligent routing.
 
 ```typescript
 // src/media/registry/ProviderRegistry.ts
@@ -209,7 +209,7 @@ export function getProviders() { /* ... */ }
 // ... and others
 ```
 
-This setup ensures that Prizm can dynamically manage and utilize a wide array of AI providers and their capabilities in a flexible and extensible manner.
+This setup ensures that mediaconduit can dynamically manage and utilize a wide array of AI providers and their capabilities in a flexible and extensible manner.
 
 ## 🔄 Provider → Service Dynamic Loading
 

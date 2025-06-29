@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-The Prizm Media Transformation System employs a comprehensive testing strategy that ensures reliability, performance, and maintainability across all components. Our testing approach combines unit tests, integration tests, and real-world validation.
+The mediaconduit Media Transformation System employs a comprehensive testing strategy that ensures reliability, performance, and maintainability across all components. Our testing approach combines unit tests, integration tests, and real-world validation.
 
 ## 🏗️ Testing Architecture
 

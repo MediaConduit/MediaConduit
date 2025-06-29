@@ -1,8 +1,8 @@
-# Prizm SDK Architecture Overview
+# mediaconduit SDK Architecture Overview
 
 ## 🏗️ High-Level Architecture
 
-Prizm is built on a sophisticated layered architecture that provides unified access to 15+ AI providers through multiple interface layers. The SDK emphasizes:
+mediaconduit is built on a sophisticated layered architecture that provides unified access to 15+ AI providers through multiple interface layers. The SDK emphasizes:
 
 - **Layered Interface Design**: From zero-config one-liners to maximum-control APIs
 - **Provider-Centric Organization**: Each provider contains all related components
@@ -10,7 +10,7 @@ Prizm is built on a sophisticated layered architecture that provides unified acc
 - **Smart Asset Management**: Format-agnostic loading with automatic role detection
 - **Type-Safe Operations**: Comprehensive TypeScript support with validation
 
-## 📊 Prizm SDK Layers
+## 📊 mediaconduit SDK Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐

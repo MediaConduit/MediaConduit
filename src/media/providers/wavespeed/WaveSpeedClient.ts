@@ -676,8 +676,8 @@ export class WaveSpeedClient {
         headers: {
           'Authorization': `Bearer ${openRouterApiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://prizm.ai',
-          'X-Title': 'Prizm WaveSpeedAI Model Discovery'
+          'HTTP-Referer': 'https://mediaconduit.ai',
+          'X-Title': 'mediaconduit WaveSpeedAI Model Discovery'
         },
         body: JSON.stringify({
           model: 'deepseek/deepseek-chat:free', // FREE model only

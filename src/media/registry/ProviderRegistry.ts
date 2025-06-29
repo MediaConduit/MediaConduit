@@ -314,7 +314,7 @@ export class ProviderRegistry {
       }
 
       const composeFilePath = path.join(tmpDir, 'docker-compose.yml');
-      const serviceConfigPath = path.join(tmpDir, 'prizm.service.json');
+      const serviceConfigPath = path.join(tmpDir, 'MediaConduit.service.json');
 
       try {
         await fs.access(composeFilePath);
@@ -326,9 +326,9 @@ export class ProviderRegistry {
       try {
         const metadataContent = await fs.readFile(serviceConfigPath, 'utf-8');
         serviceMetadata = JSON.parse(metadataContent);
-        console.log(`📋 Loaded Prizm service config: ${JSON.stringify(serviceMetadata, null, 2)}`);
+        console.log(`📋 Loaded MediaConduit service config: ${JSON.stringify(serviceMetadata, null, 2)}`);
       } catch (error) {
-        console.log(`ℹ️ No prizm.service.json found for ${owner}/${repo}, using defaults. Error: ${error.message}`);
+        console.log(`ℹ️ No MediaConduit.service.json found for ${owner}/${repo}, using defaults. Error: ${error.message}`);
       }
 
       const dockerComposeService = new DockerComposeService({
@@ -380,7 +380,7 @@ export class ProviderRegistry {
 
       const serviceDirectory = pathModule.resolve(path);
       const composeFilePath = pathModule.join(serviceDirectory, 'docker-compose.yml');
-      const serviceConfigPath = pathModule.join(serviceDirectory, 'prizm.service.json');
+      const serviceConfigPath = pathModule.join(serviceDirectory, 'MediaConduit.service.json');
 
       try {
         await fs.access(composeFilePath);
@@ -392,9 +392,9 @@ export class ProviderRegistry {
       try {
         const metadataContent = await fs.readFile(serviceConfigPath, 'utf-8');
         serviceMetadata = JSON.parse(metadataContent);
-        console.log(`📋 Loaded Prizm service config: ${JSON.stringify(serviceMetadata, null, 2)}`);
+        console.log(`📋 Loaded MediaConduit service config: ${JSON.stringify(serviceMetadata, null, 2)}`);
       } catch (error) {
-        console.log(`ℹ️ No prizm.service.json found for file provider at ${path}, using defaults. Error: ${error.message}`);
+        console.log(`ℹ️ No MediaConduit.service.json found for file provider at ${path}, using defaults. Error: ${error.message}`);
       }
 
       const dockerComposeService = new DockerComposeService({

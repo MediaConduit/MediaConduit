@@ -41,7 +41,7 @@ export class FFmpegService {
 
   constructor(ffmpegPath?: string, tempDir?: string) {
     this.ffmpegPath = ffmpegPath || 'ffmpeg';
-    this.tempDir = tempDir || path.join(os.tmpdir(), 'prizm-ffmpeg');
+    this.tempDir = tempDir || path.join(os.tmpdir(), 'mediaconduit-ffmpeg');
     this.ensureTempDir();
   }
 

@@ -46,8 +46,8 @@ class OpenRouterClient {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',        'HTTP-Referer': 'https://prizm.ai', // Optional: your site URL
-        'X-Title': 'Prizm AI Model Discovery' // Optional: your app name
+        'Content-Type': 'application/json',        'HTTP-Referer': 'https://mediaconduit.ai', // Optional: your site URL
+        'X-Title': 'mediaconduit AI Model Discovery' // Optional: your app name
       },
       body: JSON.stringify(request)
     });

@@ -40,7 +40,7 @@ async function testProviderServiceDynamicLoading() {
     
     // Configure it to use a static service
     await ffmpegProvider.configure({
-      serviceUrl: 'github:tsavo/prizm-ffmpeg-service',  // Use a GitHub URL for a static service
+      serviceUrl: 'github:tsavo/mediaconduit-ffmpeg-service',  // Use a GitHub URL for a static service
       autoStartService: false       // Don't actually start for this demo
     });
     
@@ -60,7 +60,7 @@ async function testProviderServiceDynamicLoading() {
   
   try {
     // Get a dynamic provider from GitHub
-    const githubProvider = await providerRegistry.getProvider('github:tsavo/prizm-chatterbox-service');
+    const githubProvider = await providerRegistry.getProvider('github:tsavo/mediaconduit-chatterbox-service');
     
     // Verify it's a DockerMediaProvider
     if (!(githubProvider instanceof DockerMediaProvider)) {
@@ -69,7 +69,7 @@ async function testProviderServiceDynamicLoading() {
 
     // Verify its properties
     console.log(`   ✅ GitHub provider loaded: ${githubProvider.name} (${githubProvider.id})`);
-    if (githubProvider.id !== 'prizm-chatterbox-service') {
+    if (githubProvider.id !== 'mediaconduit-chatterbox-service') {
       throw new Error('GitHub provider ID mismatch');
     }
     if (githubProvider.type !== 'local') {
@@ -114,12 +114,12 @@ async function testProviderServiceDynamicLoading() {
   console.log('===========================');
   console.log('// Static provider configuring with a GitHub service');
   console.log(`await provider.configure({`);
-  console.log(`  serviceUrl: 'github:tsavo/prizm-ffmpeg-service',`);
+  console.log(`  serviceUrl: 'github:tsavo/mediaconduit-ffmpeg-service',`);
   console.log(`  autoStartService: true`);
   console.log(`});`);
   console.log('');
   console.log('// Dynamically load a Docker-backed provider');
-  console.log(`const chatterboxProvider = await providerRegistry.getProvider('github:tsavo/prizm-chatterbox-service');`);
+  console.log(`const chatterboxProvider = await providerRegistry.getProvider('github:tsavo/mediaconduit-chatterbox-service');`);
   console.log(`await chatterboxProvider.startService(); // Start the underlying Docker service`);
 
   console.log('\n🚀 ARCHITECTURAL BENEFITS:');

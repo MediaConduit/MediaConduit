@@ -18,7 +18,7 @@ export ELEVENLABS_API_KEY="your_api_key_here"
 ### 2. Basic Usage
 
 ```typescript
-import { $ } from 'prizm';
+import { $ } from 'mediaconduit';
 
 // Simple text-to-speech
 const speech = await (await $("elevenlabs")("voice-id"))("Hello world!");
@@ -29,7 +29,7 @@ console.log(`Generated ${speech.format} audio: ${speech.data.length} bytes`);
 ### 3. Core SDK Usage
 
 ```typescript
-import { ElevenLabsProvider, Text } from 'prizm';
+import { ElevenLabsProvider, Text } from 'mediaconduit';
 
 const provider = new ElevenLabsProvider();
 await provider.configure({ 
@@ -204,4 +204,4 @@ async function reliableTTS(text: string) {
 
 ## 🎉 Success!
 
-You now have premium text-to-speech capabilities integrated into your Prizm workflow! ElevenLabs provides the highest quality voice generation for professional applications.
+You now have premium text-to-speech capabilities integrated into your mediaconduit workflow! ElevenLabs provides the highest quality voice generation for professional applications.

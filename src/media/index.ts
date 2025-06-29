@@ -1,5 +1,5 @@
 /**
- * Prizm SDK - Media Transformation SDK
+ * MediaConduit SDK - Media Transformation SDK
  * Unified access to 15+ AI providers through clean provider→model→transform architecture
  */
 

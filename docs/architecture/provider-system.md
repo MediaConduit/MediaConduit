@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-The Prizm Provider System is a sophisticated multi-provider architecture that unifies remote AI services and local Docker services under a common MediaProvider interface. The system enables seamless switching between providers while maintaining consistent APIs and type safety across all layers of the SDK.
+The mediaconduit Provider System is a sophisticated multi-provider architecture that unifies remote AI services and local Docker services under a common MediaProvider interface. The system enables seamless switching between providers while maintaining consistent APIs and type safety across all layers of the SDK.
 
 ## 🏗️ Provider-Centric Organization
 

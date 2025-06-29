@@ -20,12 +20,12 @@ async function testGitHubLoading() {
 
   // Test various GitHub URL formats
   const testUrls = [
-    'github:tsavo/prizm-ffmpeg-service',
-    'github:tsavo/prizm-chatterbox-service',
-    'github:tsavo/prizm-kokoro-service',
-    'github:tsavo/prizm-ollama-service',
-    'github:tsavo/prizm-whisper-service',
-    'github:tsavo/prizm-zonos-service'
+    'github:tsavo/mediaconduit-ffmpeg-service',
+    'github:tsavo/mediaconduit-chatterbox-service',
+    'github:tsavo/mediaconduit-kokoro-service',
+    'github:tsavo/mediaconduit-ollama-service',
+    'github:tsavo/mediaconduit-whisper-service',
+    'github:tsavo/mediaconduit-zonos-service'
   ];
 
   for (const url of testUrls) {
@@ -42,16 +42,16 @@ async function testGitHubLoading() {
   console.log('\n🔧 TESTING GITHUB PROVIDER LOADING:');
   console.log('====================================');
 
-  // Test loading a real GitHub repository as a Prizm provider
-  console.log('1. Testing GitHub provider loading (prizm-ffmpeg-service)...');
+  // Test loading a real GitHub repository as a mediaconduit provider
+  console.log('1. Testing GitHub provider loading (mediaconduit-ffmpeg-service)...');
   
   try {
-    const provider = await providerRegistry.getProvider('github:tsavo/prizm-ffmpeg-service');
+    const provider = await providerRegistry.getProvider('github:tsavo/mediaconduit-ffmpeg-service');
     console.log(`   ✅ Provider loaded successfully: ${provider.name} (${provider.id})`);
     if (!(provider instanceof DockerMediaProvider)) {
       throw new Error('Provider is not an instance of DockerMediaProvider');
     }
-    if (provider.id !== 'prizm-ffmpeg-service') {
+    if (provider.id !== 'mediaconduit-ffmpeg-service') {
       throw new Error('Provider ID mismatch');
     }
     if (provider.type !== 'local') {
@@ -67,15 +67,15 @@ async function testGitHubLoading() {
   console.log('\n🐳 TESTING GITHUB SERVICE LOADING:');
   console.log('===================================');
 
-  console.log('1. Testing GitHub service loading (prizm-ffmpeg-service)...');
+  console.log('1. Testing GitHub service loading (mediaconduit-ffmpeg-service)...');
   
   try {
-    const service = await serviceRegistry.getService('github:tsavo/prizm-ffmpeg-service');
+    const service = await serviceRegistry.getService('github:tsavo/mediaconduit-ffmpeg-service');
     console.log(`   ✅ Service loaded successfully: ${service.getServiceInfo().composeService}`);
     if (!(service instanceof DockerComposeService)) {
       throw new Error('Service is not an instance of DockerComposeService');
     }
-    if (service.getServiceInfo().composeService !== 'prizm-ffmpeg-service') {
+    if (service.getServiceInfo().composeService !== 'mediaconduit-ffmpeg-service') {
       throw new Error('Service composeService mismatch');
     }
   } catch (error) {
@@ -88,19 +88,19 @@ async function testGitHubLoading() {
   console.log('✅ Repository cloning with git');
   console.log('✅ Temporary file cleanup');
   console.log('✅ Error handling and fallbacks');
-  console.log('✅ Configuration loading (prizm.service.json)');
+  console.log('✅ Configuration loading (mediaconduit.service.json)');
   
   console.log('\n📦 PROVIDER PACKAGE REQUIREMENTS:');
   console.log('==================================');
-  console.log('For a GitHub repository to work as a Prizm provider:');
+  console.log('For a GitHub repository to work as a mediaconduit provider:');
   console.log('1. Must contain a valid docker-compose.yml');
-  console.log('2. Must contain a prizm.service.json with metadata (id, name, capabilities, etc.)');
+  console.log('2. Must contain a mediaconduit.service.json with metadata (id, name, capabilities, etc.)');
   
   console.log('\n🐳 SERVICE PACKAGE REQUIREMENTS:');
   console.log('=================================');
-  console.log('For a GitHub repository to work as a Prizm service:');
+  console.log('For a GitHub repository to work as a mediaconduit service:');
   console.log('1. Must contain a valid docker-compose.yml');
-  console.log('2. Must contain a prizm.service.json with metadata (serviceName, composeFile, etc.)');
+  console.log('2. Must contain a mediaconduit.service.json with metadata (serviceName, composeFile, etc.)');
 
   console.log('\n🚀 NEXT STEPS:');
   console.log('==============');

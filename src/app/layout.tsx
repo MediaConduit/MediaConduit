@@ -6,7 +6,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Prizm - Media Processing Platform',
+  title: 'MediaConduit - Media Processing Platform',
   description: 'Advanced media processing platform with AI-powered transformations',
 }
 

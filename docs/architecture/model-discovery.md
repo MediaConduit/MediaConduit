@@ -1,6 +1,6 @@
 # Model Discovery Deep Dive
 
-While the `ProviderRegistry` manages the availability of `MediaProvider` instances, each individual `MediaProvider` is responsible for discovering and managing the specific AI models it offers. This dynamic model discovery ensures that Prizm always has access to the latest models from integrated AI services.
+While the `ProviderRegistry` manages the availability of `MediaProvider` instances, each individual `MediaProvider` is responsible for discovering and managing the specific AI models it offers. This dynamic model discovery ensures that mediaconduit always has access to the latest models from integrated AI services.
 
 ## Dynamic Model Discovery within Providers
 
@@ -47,7 +47,7 @@ export class OpenAIProvider implements MediaProvider {
       console.log('[OpenAIProvider] Discovering models from OpenAI API...');
       const response = await this.client.models.list();
       for (const model of response.data) {
-        // Logic to map OpenAI model to Prizm's ProviderModel
+        // Logic to map OpenAI model to mediaconduit's ProviderModel
         const providerModel = this.mapOpenAIModelToProviderModel(model);
         if (providerModel) {
           this.discoveredModels.set(model.id, providerModel);
@@ -91,7 +91,7 @@ export class FalAiClient {
     const response = await axios.get<FalModelMetadata[]>(`${this.baseUrl}/models`, {
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
-        'X-Title': 'Prizm fal.ai Model Discovery'
+        'X-Title': 'mediaconduit fal.ai Model Discovery'
       },
       timeout: 60000 // 60 seconds timeout
     });
@@ -106,7 +106,7 @@ export class FalAiClient {
 
 ## `ProviderModel` Interface
 
-Regardless of the discovery mechanism, all discovered models are mapped to the internal `ProviderModel` interface, ensuring a consistent representation across Prizm.
+Regardless of the discovery mechanism, all discovered models are mapped to the internal `ProviderModel` interface, ensuring a consistent representation across mediaconduit.
 
 ```typescript
 // src/media/types/provider.ts
@@ -122,4 +122,4 @@ export interface ProviderModel {
 }
 ```
 
-This robust model discovery system allows Prizm to dynamically adapt to changes in AI provider offerings and ensures that the SDK can always leverage the most current and relevant models.
+This robust model discovery system allows mediaconduit to dynamically adapt to changes in AI provider offerings and ensures that the SDK can always leverage the most current and relevant models.

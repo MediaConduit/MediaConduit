@@ -3,7 +3,7 @@
  * 
  * Simple approach:
  * 1. Clone repo from GitHub URL
- * 2. Read prizm.service.yml configuration
+ * 2. Read MediaConduit.service.yml configuration
  * 3. Return DockerService configured with that yml
  */
 
@@ -49,9 +49,9 @@ export interface ServiceInfo {
 }
 
 /**
- * Prizm Service Configuration (from prizm.service.yml)
+ * MediaConduit Service Configuration (from MediaConduit.service.yml)
  */
-export interface PrizmServiceConfig {
+export interface MediaConduitServiceConfig {
   name: string;
   version: string;
   description?: string;
@@ -121,7 +121,7 @@ export class ServiceRegistry {
    * 
    * Simple process:
    * 1. Clone repo from GitHub URL
-   * 2. Read prizm.service.yml
+   * 2. Read MediaConduit.service.yml
    * 3. Return DockerService configured with that yml
    */
   public async getService(identifier: string, config?: any): Promise<DockerService> {
@@ -157,7 +157,7 @@ export class ServiceRegistry {
   /**
    * Load service from GitHub repository
    * 1. Clone repo
-   * 2. Read prizm.service.yml  
+   * 2. Read MediaConduit.service.yml  
    * 3. Return configured DockerService
    */
   private async loadServiceFromGitHub(identifier: string, userConfig?: any): Promise<DockerService> {
@@ -189,20 +189,20 @@ export class ServiceRegistry {
         execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
       }
 
-      // Read prizm.service.yml configuration
-      const configPath = path.join(tmpDir, 'prizm.service.yml');
+      // Read MediaConduit.service.yml configuration
+      const configPath = path.join(tmpDir, 'MediaConduit.service.yml');
       const configExists = await fs.access(configPath).then(() => true).catch(() => false);
       
       if (!configExists) {
-        throw new Error(`No prizm.service.yml found in repository ${owner}/${repo}`);
+        throw new Error(`No MediaConduit.service.yml found in repository ${owner}/${repo}`);
       }
 
-      console.log(`📋 Reading service configuration from prizm.service.yml`);
+      console.log(`📋 Reading service configuration from MediaConduit.service.yml`);
       const configContent = await fs.readFile(configPath, 'utf-8');
       
       // Parse YAML configuration
       const yaml = await import('yaml');
-      const serviceConfig: PrizmServiceConfig = yaml.parse(configContent);
+      const serviceConfig: MediaConduitServiceConfig = yaml.parse(configContent);
       
       console.log(`✅ Loaded service config: ${serviceConfig.name} v${serviceConfig.version}`);
 
@@ -257,14 +257,14 @@ export class ServiceRegistry {
 }
 
 /**
- * ConfigurableDockerService - Generic Docker service configured from prizm.service.yml
+ * ConfigurableDockerService - Generic Docker service configured from MediaConduit.service.yml
  */
 class ConfigurableDockerService implements DockerService {
   private dockerComposeService: DockerComposeService;
-  private serviceConfig: PrizmServiceConfig;
+  private serviceConfig: MediaConduitServiceConfig;
   private serviceDirectory: string;
 
-  constructor(serviceDirectory: string, serviceConfig: PrizmServiceConfig, userConfig?: any) {
+  constructor(serviceDirectory: string, serviceConfig: MediaConduitServiceConfig, userConfig?: any) {
     this.serviceDirectory = serviceDirectory;
     this.serviceConfig = serviceConfig;
     

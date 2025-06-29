@@ -1,10 +1,10 @@
-# 🎯 Prizm SDK Documentation
+# 🎯 mediaconduit SDK Documentation
 
-Welcome to the comprehensive documentation for **Prizm** - the TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture!
+Welcome to the comprehensive documentation for **mediaconduit** - the TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture!
 
 ## 🚀 **NEW: Dynamic Provider & Service Loading (June 2025)**
 
-Prizm now supports **Go-like module loading** for providers and services from URLs:
+mediaconduit now supports **Go-like module loading** for providers and services from URLs:
 
 ```typescript
 // Load providers from GitHub
@@ -31,7 +31,7 @@ await provider.configure({
 
 ## 🚀 **Quick Start & Examples**rizm SDK Documentation
 
-Welcome to the comprehensive documentation for **Prizm** - the TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture!
+Welcome to the comprehensive documentation for **mediaconduit** - the TypeScript SDK that provides unified access to 15+ AI providers through a clean provider→model→transform architecture!
 
 ## 🚀 **Quick Start & Examples**
 
@@ -65,7 +65,7 @@ Welcome to the comprehensive documentation for **Prizm** - the TypeScript SDK th
 
 ## 🛠️ **Development & Extension**
 
-### 🔧 [Extending Prizm](./EXTENDING_PLATFORM.md)
+### 🔧 [Extending mediaconduit](./EXTENDING_PLATFORM.md)
 **Add new providers, models, and services!**
 - Complete new provider implementation guide
 - Adding Docker-based local services
@@ -231,7 +231,7 @@ Whether you're creating:
 - 🏭 **Enterprise-scale media processing** with auto-scaling
 - 🎪 **Interactive collaborative tools** with real-time AI
 
-Prizm provides the unified SDK to make it happen!
+mediaconduit provides the unified SDK to make it happen!
 
 **Start with a one-liner, scale to the entire AI ecosystem! 🚀**
 

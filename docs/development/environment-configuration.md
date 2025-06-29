@@ -1,6 +1,6 @@
 # 🔧 Environment Configuration Guide
 
-Prizm relies on environment variables for configuring API keys, service URLs, and other critical settings. This guide details the essential environment variables and how to set them up for development and deployment.
+mediaconduit relies on environment variables for configuring API keys, service URLs, and other critical settings. This guide details the essential environment variables and how to set them up for development and deployment.
 
 ## `.env.example` and `.env.local`
 
@@ -130,4 +130,4 @@ For production environments, the method of setting environment variables depends
 *   **Server-side (Node.js):** Use `process.env.YOUR_VARIABLE_NAME`.
 *   **Client-side (Next.js):** For variables exposed to the browser, they must be prefixed with `NEXT_PUBLIC_`. For example, `NEXT_PUBLIC_APP_URL` can be accessed as `process.env.NEXT_PUBLIC_APP_URL` in both server and client-side code.
 
-By properly configuring these environment variables, you ensure that Prizm can connect to all necessary AI providers and local services, enabling its full range of media processing capabilities.
+By properly configuring these environment variables, you ensure that mediaconduit can connect to all necessary AI providers and local services, enabling its full range of media processing capabilities.

@@ -1,6 +1,6 @@
 # Dynamic Loading Quick Start Guide
 
-Get started with Prizm's new dynamic provider and service loading in 5 minutes!
+Get started with mediaconduit's new dynamic provider and service loading in 5 minutes!
 
 ## 🎯 What is Dynamic Loading?
 
@@ -18,7 +18,7 @@ const provider = await getProvider('https://github.com/company/custom-provider')
 
 ### **Load Provider from GitHub**
 ```typescript
-import { getProvider } from 'prizm';
+import { getProvider } from 'mediaconduit';
 
 // Load a custom AI provider from GitHub
 const provider = await getProvider('https://github.com/company/advanced-ai-provider');
@@ -87,14 +87,14 @@ await provider.configure({
 my-ai-provider/
 ├── package.json          # Entry point
 ├── src/index.ts          # Provider implementation
-├── prizm.config.json     # Optional metadata
+├── mediaconduit.config.json     # Optional metadata
 └── README.md
 ```
 
 ### **2. Basic Provider Implementation**
 ```typescript
 // src/index.ts
-import { MediaProvider, MediaCapability, ProviderType } from 'prizm';
+import { MediaProvider, MediaCapability, ProviderType } from 'mediaconduit';
 
 export default class MyCustomProvider implements MediaProvider {
   readonly id = 'my-custom-provider';
@@ -140,7 +140,7 @@ export default class MyCustomProvider implements MediaProvider {
     "build": "tsc"
   },
   "dependencies": {
-    "prizm": "^1.0.0"
+    "mediaconduit": "^1.0.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
@@ -169,7 +169,7 @@ my-docker-service/
 ### **2. Basic Service Implementation**
 ```typescript
 // src/index.ts
-import { DockerService } from 'prizm';
+import { DockerService } from 'mediaconduit';
 
 export default class MyCustomService implements DockerService {
   private dockerService: any;
@@ -241,7 +241,7 @@ console.log(logs);
 ### **Debugging Dynamic Loading**
 ```typescript
 // Enable debug logging
-process.env.DEBUG = 'prizm:*';
+process.env.DEBUG = 'mediaconduit:*';
 
 // Check what's available
 const registry = ProviderRegistry.getInstance();
@@ -256,7 +256,7 @@ console.log('Registry stats:', registry.getStats());
 - **[Full Dynamic Loading Documentation](../architecture/dynamic-loading.md)**
 - **[Provider System Architecture](../architecture/provider-system.md)**
 - **[Docker Service Management](../architecture/docker-management.md)**
-- **[Community Provider Examples](https://github.com/prizm-community/providers)**
+- **[Community Provider Examples](https://github.com/mediaconduit-community/providers)**
 
 ## 💡 Tips
 

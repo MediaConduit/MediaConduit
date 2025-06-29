@@ -1,12 +1,12 @@
-# 🚀 Prizm - Awesome Examples & One-Liners
+# 🚀 mediaconduit - Awesome Examples & One-Liners
 
-Welcome to the most elegant media transformation SDK ever built! Prizm makes AI-powered media generation as simple as one line of code, while supporting incredibly complex multi-provider pipelines.
+Welcome to the most elegant media transformation SDK ever built! mediaconduit makes AI-powered media generation as simple as one line of code, while supporting incredibly complex multi-provider pipelines.
 
 ## 🌐 **NEW: Dynamic Loading Examples (June 2025)**
 
 ### 🔄 Load Providers Dynamically
 ```typescript
-import { getProvider } from 'prizm';
+import { getProvider } from 'mediaconduit';
 
 // Load custom provider from GitHub
 const customProvider = await getProvider('https://github.com/company/ai-provider');
@@ -57,7 +57,7 @@ await provider.configure({
 
 ### 🖼️ Generate Images (Fluent API - Zero Config)
 ```typescript
-import { $ } from 'prizm';
+import { $ } from 'mediaconduit';
 
 // One line to rule them all - works immediately!
 const image = await $("replicate")("flux-schnell")("A futuristic city at sunset");
@@ -80,7 +80,7 @@ const speech = await $("huggingface")("mms-tts-eng")("Professional voiceover tex
 
 ### 🗣️ Speech to Text from Video
 ```typescript
-import { AssetLoader } from 'prizm';
+import { AssetLoader } from 'mediaconduit';
 
 // One line: load video + extract audio + transcribe
 const transcript = await (await AssetLoader.load('video.mp4').asSpeech()).transcribe();
@@ -88,7 +88,7 @@ const transcript = await (await AssetLoader.load('video.mp4').asSpeech()).transc
 
 ### 🎨 Smart Asset Loading (Any Format)
 ```typescript
-import { AssetLoader } from 'prizm';
+import { AssetLoader } from 'mediaconduit';
 
 // Smart loading - auto-detects format and applies roles
 const videoAsset = AssetLoader.load('input.mp4');    // Auto-detects: Video + Audio + Speech
@@ -526,7 +526,7 @@ const result = await pipeline.processJob({
 
 ## 🎯 Ready to Build Something Amazing?
 
-These examples showcase just a fraction of what's possible with Prizm. The platform's unified architecture means you can:
+These examples showcase just a fraction of what's possible with mediaconduit. The platform's unified architecture means you can:
 
 - **Mix and match providers** seamlessly
 - **Chain complex operations** with simple, readable code  

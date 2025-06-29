@@ -2,7 +2,7 @@
  * Universal Role Compatibility Test
  * 
  * Demonstrates that ANY asset can be input to ANY model through asRole<T>()
- * This is the breakthrough that makes Prizm the first truly universal multi-modal AI platform.
+ * This is the breakthrough that makes mediaconduit the first truly universal multi-modal AI platform.
  */
 
 import { SmartAssetFactory } from './src/media/assets/SmartAssetFactory';

@@ -1,6 +1,6 @@
 # Provider-Centric Organization
 
-This directory organizes all provider-related components by **provider domain** within the Prizm SDK architecture. This makes development and maintenance much easier within the provider→model→transform pattern.
+This directory organizes all provider-related components by **provider domain** within the MediaConduit SDK architecture. This makes development and maintenance much easier within the provider→model→transform pattern.
 
 ## 🌐 **NEW: Dynamic Provider Loading (June 2025)**
 
@@ -21,7 +21,7 @@ const provider = await getProvider('file:///path/to/provider');
 ```
 custom-ai-provider/               # GitHub repository
 ├── package.json                  # Entry point definition
-├── prizm.config.json            # Optional provider metadata
+├── MediaConduit.config.json            # Optional provider metadata
 ├── src/
 │   └── index.ts                 # Provider implementation
 ├── dist/

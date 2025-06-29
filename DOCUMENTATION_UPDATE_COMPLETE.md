@@ -4,7 +4,7 @@
 
 All documentation has been completely updated to reflect the **Universal Role Compatibility** system - the revolutionary breakthrough that enables ANY asset to be input to ANY model through automatic provider-based conversions.
 
-This transforms Prizm from a multi-provider platform into **the first truly universal multi-modal AI system**.
+This transforms MediaConduit from a multi-provider platform into **the first truly universal multi-modal AI system**.
 
 ## 🔥 **The Game-Changing Insight**
 

@@ -71,11 +71,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@prizm/core': path.resolve(__dirname, './packages/core/src'),
-      '@prizm/providers': path.resolve(__dirname, './packages/providers/src'),
-      '@prizm/workflows': path.resolve(__dirname, './packages/workflows/src'),
-      '@prizm/assets': path.resolve(__dirname, './packages/assets/src'),
-      'prizm': path.resolve(__dirname, './src/media')
+      '@mediaconduit/core': path.resolve(__dirname, './packages/core/src'),
+      '@mediaconduit/providers': path.resolve(__dirname, './packages/providers/src'),
+      '@mediaconduit/workflows': path.resolve(__dirname, './packages/workflows/src'),
+      '@mediaconduit/assets': path.resolve(__dirname, './packages/assets/src'),
+      'mediaconduit': path.resolve(__dirname, './src/media')
     }
   },
   

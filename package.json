@@ -1,7 +1,14 @@
-{
-  "name": "prizm",
+{  "name": "mediaconduit",
   "version": "0.1.0",
   "description": "Media Transformation SDK - Unified access to 15+ AI providers through clean provider→model→transform architecture",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MediaConduit/MediaConduit.git"
+  },
+  "homepage": "https://github.com/MediaConduit/MediaConduit",
+  "bugs": {
+    "url": "https://github.com/MediaConduit/MediaConduit/issues"
+  },
   "keywords": [
     "ai",
     "media",

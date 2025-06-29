@@ -1,10 +1,10 @@
-# Prizm Agents Overview
+# MediaConduit Agents Overview
 
-This document provides an overview of the various agents (referred to as "Providers") that are integrated into the Prizm platform. These agents are responsible for handling a wide range of media generation and processing tasks, from text and image generation to audio and video manipulation.
+This document provides an overview of the various agents (referred to as "Providers") that are integrated into the MediaConduit platform. These agents are responsible for handling a wide range of media generation and processing tasks, from text and image generation to audio and video manipulation.
 
 ## Provider Architecture
 
-The Prizm platform uses a provider-based architecture to orchestrate a variety of media services. The core of this system is the `ProviderRegistry`, which is responsible for initializing, registering, and managing all available providers.
+The MediaConduit platform uses a provider-based architecture to orchestrate a variety of media services. The core of this system is the `ProviderRegistry`, which is responsible for initializing, registering, and managing all available providers.
 
 Many of these providers are run as Docker containers and are managed by the `DockerComposeService`, which handles the lifecycle of each service (starting, stopping, health checks, etc.). This allows for a flexible and scalable system where new providers can be easily added and managed.
 
@@ -32,10 +32,10 @@ These providers run as local Docker containers and are responsible for handling 
 
 ## Agent Orchestration
 
-The Prizm platform uses a sophisticated orchestration system to manage these providers and execute complex media generation jobs.
+The MediaConduit platform uses a sophisticated orchestration system to manage these providers and execute complex media generation jobs.
 
 *   **ProviderRegistry:** The central registry for all providers. It is responsible for initializing and managing the lifecycle of each provider.
 *   **DockerComposeService:** A generic service for managing Docker-based providers. It handles starting, stopping, and monitoring the health of each service.
 *   **Job and Capability System:** The platform uses a job and capability system to match tasks with the appropriate providers. The `/api/v1/capabilities` endpoint lists the capabilities of each provider, and the `/api/v1/jobs` endpoint is used to create and manage media generation jobs.
 
-By leveraging this agent-based architecture, the Prizm platform can provide a flexible, scalable, and powerful solution for all types of media generation and processing.
+By leveraging this agent-based architecture, the MediaConduit platform can provide a flexible, scalable, and powerful solution for all types of media generation and processing.

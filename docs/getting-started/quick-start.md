@@ -1,8 +1,8 @@
 # Quick Start Guide
 
-## 🚀 Get Started with Prizm in 5 Minutes
+## 🚀 Get Started with mediaconduit in 5 Minutes
 
-This guide will get you up and running with the Prizm Media Transformation SDK in just a few minutes.
+This guide will get you up and running with the mediaconduit Media Transformation SDK in just a few minutes.
 
 ## 📋 Prerequisites
 
@@ -17,7 +17,7 @@ This guide will get you up and running with the Prizm Media Transformation SDK i
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd prizm
+cd mediaconduit
 
 # Install dependencies
 npm install
@@ -28,7 +28,7 @@ npm run test
 
 ### 2. Set Up API Keys
 
-Prizm supports multiple providers. Set up your preferred provider:
+mediaconduit supports multiple providers. Set up your preferred provider:
 
 ```bash
 # ElevenLabs (Premium TTS)
@@ -84,11 +84,11 @@ npm run test:integration -- ChatterboxTTSDockerService.integration.test.ts
 ### ElevenLabs Text-to-Speech Example
 
 ```typescript
-import { $$ } from 'prizm';
+import { $$ } from 'mediaconduit';
 
 async function generateSpeech() {
   // NEW: Clean single await syntax
-  const speech = await $$("elevenlabs")("voice-id")('Hello! Welcome to Prizm!');
+  const speech = await $$("elevenlabs")("voice-id")('Hello! Welcome to mediaconduit!');
   
   console.log(`✅ Generated speech: ${speech.format}`);
   console.log(`📊 File size: ${(speech.data.length / 1024).toFixed(1)}KB`);
@@ -100,7 +100,7 @@ generateSpeech();
 ### Alternative Syntax Options
 
 ```typescript
-import { $, $$ } from 'prizm';
+import { $, $$ } from 'mediaconduit';
 
 // Option 1: Single await (cleanest)
 const audio1 = await $$("elevenlabs")("voice-id")("Hello!");
@@ -124,7 +124,7 @@ async function generateLocalSpeech() {
   
   // Generate speech from text locally
   const result = await ttsService.generateTTS(
-    'Hello! Welcome to Prizm Media Transformation!',
+    'Hello! Welcome to mediaconduit Media Transformation!',
     './output/welcome.mp3'
   );
   

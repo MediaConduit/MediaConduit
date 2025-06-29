@@ -1,6 +1,6 @@
-# 🛠️ Prizm - Extending the SDK
+# 🛠️ mediaconduit - Extending the SDK
 
-This guide shows you how to extend Prizm with new AI providers, models, and services. The SDK is designed for easy extensibility using consistent interfaces and patterns.
+This guide shows you how to extend mediaconduit with new AI providers, models, and services. The SDK is designed for easy extensibility using consistent interfaces and patterns.
 
 ## 🌐 **NEW: Dynamic Provider Loading (June 2025)**
 
@@ -12,7 +12,7 @@ You can now create and distribute providers dynamically without modifying the co
 ```
 my-ai-provider/
 ├── package.json                  # Entry point and dependencies
-├── prizm.config.json            # Optional provider metadata
+├── mediaconduit.config.json            # Optional provider metadata
 ├── src/
 │   └── index.ts                 # Provider implementation
 ├── dist/
@@ -24,7 +24,7 @@ my-ai-provider/
 2. **Provider Implementation:**
 ```typescript
 // src/index.ts
-import { MediaProvider, MediaCapability, ProviderType } from 'prizm';
+import { MediaProvider, MediaCapability, ProviderType } from 'mediaconduit';
 
 export default class MyCustomProvider implements MediaProvider {
   readonly id = 'my-custom-provider';
@@ -35,7 +35,7 @@ export default class MyCustomProvider implements MediaProvider {
   async configure(config: any): Promise<void> {
     // Handle dynamic service loading
     if (config.serviceUrl) {
-      const { ServiceRegistry } = await import('prizm');
+      const { ServiceRegistry } = await import('mediaconduit');
       const serviceRegistry = ServiceRegistry.getInstance();
       this.dockerService = await serviceRegistry.getService(config.serviceUrl);
     }
@@ -64,10 +64,10 @@ await provider.configure({
 
 ### **Creating a Distributed Service**
 
-Services are configuration-driven via `prizm.service.yml`:
+Services are configuration-driven via `mediaconduit.service.yml`:
 
 ```yaml
-# prizm.service.yml
+# mediaconduit.service.yml
 name: my-gpu-service
 version: "1.0.0"
 description: "GPU-accelerated inference service"
@@ -92,7 +92,7 @@ requirements:
 
 ## 🎯 Quick Overview
 
-Prizm's extensible architecture follows these patterns:
+mediaconduit's extensible architecture follows these patterns:
 - **Providers**: Integrations with external AI services (e.g., FAL.ai, OpenAI) or local Docker services.
 - **Models**: Specific AI model implementations (e.g., text-to-image, text-to-video, audio-to-text).
 - **Clients**: API communication layers for interacting with external services or local Docker services.
@@ -100,7 +100,7 @@ Prizm's extensible architecture follows these patterns:
 
 ## 🔌 Adding a New Remote API Provider
 
-This section outlines the process of integrating a new remote AI API provider into Prizm, using a hypothetical "AmazingAI" provider as an example.
+This section outlines the process of integrating a new remote AI API provider into mediaconduit, using a hypothetical "AmazingAI" provider as an example.
 
 ### Step 1: Create Provider Package Structure
 
@@ -157,7 +157,7 @@ export class AmazingAiClient {
       headers: {
         'Authorization': `Bearer ${this.config.apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Prizm/1.0'
+        'User-Agent': 'mediaconduit/1.0'
       }
     });
   }
@@ -619,7 +619,7 @@ version: '3.8'
 services:
   videoai:
     build: .
-    container_name: prizm-videoai
+    container_name: mediaconduit-videoai
     ports:
       - "8008:8008"
     environment:
@@ -1062,7 +1062,7 @@ if (started) {
 
 ## 🔧 Adding Custom Capabilities
 
-To extend Prizm with entirely new types of AI capabilities (e.g., 3D model generation), you need to define new `MediaCapability` enums, create corresponding provider interfaces, and implement abstract models and asset types.
+To extend mediaconduit with entirely new types of AI capabilities (e.g., 3D model generation), you need to define new `MediaCapability` enums, create corresponding provider interfaces, and implement abstract models and asset types.
 
 ### Step 1: Define New Capability (`src/media/types/provider.ts`)
 
@@ -1248,7 +1248,7 @@ export class CostOptimizedProvider implements TextToImageProvider {
 
 ## 🚀 Next Steps
 
-With these patterns, you can extend Prizm with:
+With these patterns, you can extend mediaconduit with:
 
 -   **New AI providers** (Stability AI, Midjourney, RunwayML, etc.)
 -   **Custom Docker services** (background removal, upscaling, style transfer)

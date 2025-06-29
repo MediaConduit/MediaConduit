@@ -1,12 +1,12 @@
 # 🎯 Fluent API Complete Reference
 
-Prizm's Fluent API provides the most elegant syntax for AI media transformations. We now offer **two syntax patterns** for maximum flexibility and consistency, plus **dynamic provider loading**.
+mediaconduit's Fluent API provides the most elegant syntax for AI media transformations. We now offer **two syntax patterns** for maximum flexibility and consistency, plus **dynamic provider loading**.
 
 ## 🌐 **NEW: Dynamic Provider Loading (June 2025)**
 
 ### **Dynamic Provider Syntax**
 ```typescript
-import { getProvider, $$ } from 'prizm';
+import { getProvider, $$ } from 'mediaconduit';
 
 // Load providers dynamically
 const customProvider = await getProvider('github:company/ai-provider@v1.0.0');
@@ -48,7 +48,7 @@ const result = await $$(provider)("model")(input);
 
 ### **🆕 Single Await Pattern (Recommended)**
 ```typescript
-import { $$ } from 'prizm';
+import { $$ } from 'mediaconduit';
 
 // Pattern: await $$("provider")("model")(input, options)
 const speech = await $$("elevenlabs")("voice-id")("Hello world!");
@@ -58,7 +58,7 @@ const video = await $$("runway")("gen-3")("Dancing robot");
 
 ### **🔄 Double Await Pattern (Legacy)**
 ```typescript
-import { $ } from 'prizm';
+import { $ } from 'mediaconduit';
 
 // Pattern: await (await $("provider")("model"))(input, options)
 const speech = await (await $("elevenlabs")("voice-id"))("Hello world!");
@@ -345,4 +345,4 @@ const voice = await elevenlabs("voice-id");
 
 ## 🎉 **Success!**
 
-You now have complete mastery of Prizm's Fluent API! These patterns enable you to create powerful AI media pipelines with minimal code while maintaining full flexibility and error handling.
+You now have complete mastery of mediaconduit's Fluent API! These patterns enable you to create powerful AI media pipelines with minimal code while maintaining full flexibility and error handling.
