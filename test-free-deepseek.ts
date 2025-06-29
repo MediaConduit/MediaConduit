@@ -47,8 +47,8 @@ class OpenRouterClient {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',        'HTTP-Referer': 'https://mediaconduit.ai',
-        'X-Title': 'mediaconduit AI Model Discovery'
+        'Content-Type': 'application/json',        'HTTP-Referer': 'https://MediaConduit.ai',
+        'X-Title': 'MediaConduit AI Model Discovery'
       },
       body: JSON.stringify(request)
     });
