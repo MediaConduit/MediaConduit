@@ -42,6 +42,48 @@ export class OllamaAPIClient {
     }
   }
 
+  async getInstalledModels(): Promise<string[]> {
+    try {
+      const { data } = await this.client.get('/api/tags');
+      if (data && Array.isArray(data.models)) {
+        return data.models.map((model: any) => model.name || model.model);
+      }
+      return [];
+    } catch (error) {
+      console.warn(`[OllamaAPIClient] Failed to get installed models: ${error.message}`);
+      return [];
+    }
+  }
+
+  async pullModel(modelName: string): Promise<boolean> {
+    try {
+      console.log(`🔄 Pulling Ollama model: ${modelName}`);
+      await this.client.post('/api/pull', { name: modelName });
+      console.log(`✅ Successfully pulled model: ${modelName}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to pull model ${modelName}: ${error.message}`);
+      return false;
+    }
+  }
+
+  async ensureModelAvailable(modelName: string): Promise<boolean> {
+    try {
+      // First check if model is already installed
+      const installedModels = await this.getInstalledModels();
+      if (installedModels.includes(modelName)) {
+        return true;
+      }
+      
+      // If not installed, try to pull it
+      console.log(`📥 Model ${modelName} not found locally, attempting to pull...`);
+      return await this.pullModel(modelName);
+    } catch (error) {
+      console.error(`❌ Failed to ensure model availability: ${error.message}`);
+      return false;
+    }
+  }
+
   async generateText(request: OllamaGenerateRequest): Promise<OllamaGenerateResponse> {
     const { data } = await this.client.post('/api/generate', {
       model: request.model,

@@ -12,7 +12,6 @@ import {
   ProviderModel,
   ProviderConfig
 } from '../../../types/provider';
-import { KokoroDockerService } from '../../../services/KokoroDockerService';
 import { KokoroAPIClient } from './KokoroAPIClient';
 import { KokoroDockerModel } from './KokoroDockerModel';
 import { TextToAudioModel } from '../../../models/abstracts/TextToAudioModel';
@@ -28,10 +27,39 @@ export class KokoroDockerProvider implements MediaProvider, TextToAudioProvider 
   readonly capabilities = [MediaCapability.TEXT_TO_AUDIO];
   readonly models: ProviderModel[] = [];
 
-  private dockerServiceManager?: DockerComposeService;
+  private dockerServiceManager?: any; // Generic service from ServiceRegistry
   private apiClient?: KokoroAPIClient;
+  private config?: ProviderConfig;
 
-  
+  /**
+   * Constructor automatically configures from environment variables
+   */
+  constructor() {
+    // Service will be configured via ServiceRegistry when configure() is called
+    // Auto-configure from environment variables (async but non-blocking)
+    this.autoConfigureFromEnv().catch(error => {
+      // Silent fail - provider will just not be available until manually configured
+    });
+  }
+
+  /**
+   * Automatically configure from environment variables
+   */
+  private async autoConfigureFromEnv(): Promise<void> {
+    // Use GitHub service URL for dynamic loading
+    const serviceUrl = process.env.KOKORO_SERVICE_URL || 'github:MediaConduit/kokoro-service';
+    
+    try {
+      await this.configure({
+        serviceUrl: serviceUrl,
+        baseUrl: 'http://localhost:8005', // Default port for Kokoro service
+        timeout: 300000, // 5 minute timeout for model loading
+        retries: 1
+      });
+    } catch (error) {
+      console.warn(`[KokoroDockerProvider] Auto-configuration failed: ${error.message}`);
+    }
+  }
 
   /**
    * Get the API client instance
@@ -176,19 +204,90 @@ export class KokoroDockerProvider implements MediaProvider, TextToAudioProvider 
    */
   async configure(config: ProviderConfig): Promise<void> {
     this.config = config;
+    
+    // If serviceUrl is provided (e.g., GitHub URL), use ServiceRegistry
     if (config.serviceUrl) {
       const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
       const serviceRegistry = ServiceRegistry.getInstance();
-      this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as DockerComposeService;
+      this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as any;
+      
+      // Configure API client with service port
       const serviceInfo = this.dockerServiceManager.getServiceInfo();
       if (serviceInfo.ports && serviceInfo.ports.length > 0) {
         const port = serviceInfo.ports[0];
         this.apiClient = new KokoroAPIClient({ baseUrl: `http://localhost:${port}` });
       }
+      
+      console.log(`🔗 KokoroDockerProvider configured to use service: ${config.serviceUrl}`);
+      return;
     }
-    // Docker providers typically don't need API keys, but may need service URLs
+    
+    // Fallback to direct configuration (legacy)
     if (config.baseUrl && !this.apiClient) {
       this.apiClient = new KokoroAPIClient({ baseUrl: config.baseUrl });
+    }
+  }
+
+  /**
+   * Get the Docker service instance from ServiceRegistry
+   */
+  protected getDockerService(): any {
+    if (!this.dockerServiceManager) {
+      throw new Error('Kokoro service not configured. Please call configure() first.');
+    }
+    return this.dockerServiceManager;
+  }
+
+  /**
+   * Start the Docker service
+   */
+  async startService(): Promise<boolean> {
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.startService === 'function') {
+        return await dockerService.startService();
+      } else {
+        console.error('Kokoro service not properly configured');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to start Kokoro Docker service:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Stop the Docker service
+   */
+  async stopService(): Promise<boolean> {
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.stopService === 'function') {
+        return await dockerService.stopService();
+      } else {
+        console.error('Kokoro service not properly configured');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to stop Kokoro Docker service:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get service status
+   */
+  async getServiceStatus(): Promise<any> {
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.getServiceStatus === 'function') {
+        return await dockerService.getServiceStatus();
+      } else {
+        return { running: false, healthy: false };
+      }
+    } catch (error) {
+      console.error('Failed to get Kokoro service status:', error);
+      return { running: false, healthy: false };
     }
   }
 

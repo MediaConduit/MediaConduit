@@ -41,23 +41,15 @@ export class ChatterboxProvider implements MediaProvider, TextToAudioProvider {
   }
 
   private async autoConfigureFromEnv(): Promise<void> {
-    const serviceUrl = process.env.CHATTERBOX_DOCKER_URL || 'github:your-org/chatterbox-docker-service'; // Example GitHub URL
+    // Use GitHub service URL for dynamic loading
+    const serviceUrl = process.env.CHATTERBOX_SERVICE_URL || 'github:MediaConduit/chatterbox-service';
     
     try {
-      const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
-      const serviceRegistry = ServiceRegistry.getInstance();
-      this.dockerServiceManager = await serviceRegistry.getService(serviceUrl) as DockerComposeService;
-      
-      const serviceInfo = this.dockerServiceManager.getServiceInfo();
-      if (serviceInfo.ports && serviceInfo.ports.length > 0) {
-        const port = serviceInfo.ports[0];
-        this.apiClient = new ChatterboxAPIClient({ baseUrl: `http://localhost:${port}` });
-      }
-
       await this.configure({
-        serviceUrl,
-        timeout: 300000,
-        retries: 2
+        serviceUrl: serviceUrl,
+        baseUrl: 'http://localhost:8004', // Default port for Chatterbox service
+        timeout: 600000, // Longer timeout for model loading
+        retries: 1
       });
     } catch (error) {
       console.warn(`[ChatterboxProvider] Auto-configuration failed: ${error.message}`);
@@ -102,8 +94,27 @@ export class ChatterboxProvider implements MediaProvider, TextToAudioProvider {
 
   async configure(config: ProviderConfig): Promise<void> {
     this.config = config;
+    
+    // If serviceUrl is provided (e.g., GitHub URL), use ServiceRegistry
+    if (config.serviceUrl) {
+      const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
+      const serviceRegistry = ServiceRegistry.getInstance();
+      this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as any;
+      
+      // Configure API client with service port
+      const serviceInfo = this.dockerServiceManager.getServiceInfo();
+      if (serviceInfo.ports && serviceInfo.ports.length > 0) {
+        const port = serviceInfo.ports[0];
+        this.apiClient = new ChatterboxAPIClient(`http://localhost:${port}`);
+      }
+      
+      console.log(`🔗 ChatterboxProvider configured to use service: ${config.serviceUrl}`);
+      return;
+    }
+    
+    // Fallback to direct configuration (legacy)
     if (config.baseUrl && !this.apiClient) {
-      this.apiClient = new ChatterboxAPIClient({ baseUrl: config.baseUrl });
+      this.apiClient = new ChatterboxAPIClient(config.baseUrl);
     }
   }
 
@@ -154,7 +165,7 @@ export class ChatterboxProvider implements MediaProvider, TextToAudioProvider {
       const { ChatterboxTextToAudioModel } = await import('./ChatterboxTextToAudioModel');
       return new ChatterboxTextToAudioModel({
         apiClient: this.apiClient!,
-        baseUrl: this.apiClient?.baseUrl || 'http://localhost:8004',
+        baseUrl: this.config?.baseUrl || 'http://localhost:8004',
         timeout: this.config?.timeout || 300000
       });
     }

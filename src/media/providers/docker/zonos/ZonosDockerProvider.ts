@@ -2,14 +2,13 @@
  * ZonosDockerProvider
  * 
  * Provider for Zonos TTS models via Docker containers.
- * Based on ChatterboxDockerProvider and KokoroDockerProvider patterns.
+ * Migrated to use ServiceRegistry pattern for distributed service management.
  */
 
 import { MediaProvider, ProviderConfig, ProviderModel, ProviderType } from '../../../types/provider';
 import { TextToAudioProvider } from '../../../capabilities/interfaces/TextToAudioProvider';
 import { TextToAudioModel } from '../../../models/abstracts/TextToAudioModel';
 import { MediaCapability } from '../../../types/provider';
-import { DockerComposeService } from '../../../services/DockerComposeService'; // Updated import
 import { ZonosTextToAudioModel } from './ZonosTextToAudioModel';
 import { ZonosAPIClient } from './ZonosAPIClient';
 
@@ -22,11 +21,39 @@ export class ZonosDockerProvider implements MediaProvider, TextToAudioProvider {
   readonly type = ProviderType.LOCAL;
   readonly capabilities = [MediaCapability.TEXT_TO_AUDIO];
   
-  private dockerServiceManager?: DockerComposeService; // Updated property
+  private dockerServiceManager?: any; // Generic service from ServiceRegistry
+  private config?: ProviderConfig;
   private apiClient?: ZonosAPIClient;
+  private isConfiguring = false; // Prevent concurrent configuration
 
   constructor() {
-    // Initialize lazily to avoid startup overhead
+    // Auto-configure from environment variables (async but non-blocking)
+    // Use setTimeout to ensure this runs after any immediate configure() calls
+    setTimeout(() => {
+      this.autoConfigureFromEnv().catch(error => {
+        // Silent fail - provider will just not be available until manually configured
+      });
+    }, 100);
+  }
+
+  private async autoConfigureFromEnv(): Promise<void> {
+    // Skip if already configuring or configured
+    if (this.isConfiguring || this.dockerServiceManager) {
+      return;
+    }
+    
+    const serviceUrl = process.env.ZONOS_SERVICE_URL || 'github:MediaConduit/zonos-service';
+    
+    try {
+      await this.configure({
+        serviceUrl: serviceUrl,
+        baseUrl: 'http://localhost:7860',
+        timeout: 300000,
+        retries: 1
+      });
+    } catch (error) {
+      console.warn(`[ZonosProvider] Auto-configuration failed: ${error.message}`);
+    }
   }
 
   /**
@@ -47,31 +74,49 @@ export class ZonosDockerProvider implements MediaProvider, TextToAudioProvider {
   }
 
   /**
+   * Get the Docker service instance from ServiceRegistry
+   */
+  protected getDockerService(): any {
+    if (!this.dockerServiceManager) {
+      throw new Error('Service not configured. Please call configure() first.');
+    }
+    return this.dockerServiceManager;
+  }
+
+  /**
    * Start the Docker service
    */
   async startService(): Promise<boolean> {
-    if (!this.dockerServiceManager) {
-      throw new Error('Docker service manager not initialized for ZonosDockerProvider');
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.startService === 'function') {
+        return await dockerService.startService();
+      } else {
+        console.error('Service not properly configured');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to start Docker service:', error);
+      return false;
     }
-    const started: boolean = await this.dockerServiceManager.startService();
-
-    if (started) {
-      // Wait for service to be healthy
-      const healthy: boolean = await this.dockerServiceManager.waitForHealthy(30000);
-      return healthy;
-    }
-
-    return false;
   }
 
   /**
    * Stop the Docker service
    */
   async stopService(): Promise<boolean> {
-    if (!this.dockerServiceManager) {
-      throw new Error('Docker service manager not initialized for ZonosDockerProvider');
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.stopService === 'function') {
+        return await dockerService.stopService();
+      } else {
+        console.error('Service not properly configured');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to stop Docker service:', error);
+      return false;
     }
-    return await this.dockerServiceManager.stopService();
   }
 
   /**
@@ -82,20 +127,22 @@ export class ZonosDockerProvider implements MediaProvider, TextToAudioProvider {
     healthy: boolean;
     error?: string;
   }> {
-    if (!this.dockerServiceManager) {
-      return {
-        running: false,
-        healthy: false,
-        error: 'Docker service manager not initialized'
-      };
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.getServiceStatus === 'function') {
+        const status = await dockerService.getServiceStatus();
+        return {
+          running: status.running || false,
+          healthy: status.health === 'healthy',
+          error: status.state === 'error' ? status.state : undefined
+        };
+      } else {
+        return { running: false, healthy: false };
+      }
+    } catch (error) {
+      console.error('Failed to get service status:', error);
+      return { running: false, healthy: false };
     }
-    const status = await this.dockerServiceManager.getServiceStatus();
-
-    return {
-      running: status.running || false,
-      healthy: status.health === 'healthy',
-      error: status.state === 'error' ? status.state : undefined
-    };
   }
 
   /**
@@ -120,265 +167,130 @@ export class ZonosDockerProvider implements MediaProvider, TextToAudioProvider {
    * Create a text-to-speech model instance (TextToAudioProvider interface)
    */
   async createTextToAudioModel(modelId: string): Promise<TextToAudioModel> {
-    if (!this.supportsTextToAudioModel(modelId)) {
-      throw new Error(`Model '${modelId}' is not supported by Zonos Docker provider`);
-    }
-
-    // Get Docker service and API client
-    // Removed direct call to getDockerService()
     const apiClient = this.getAPIClient();
-
-    return new ZonosTextToAudioModel({
-      dockerService: this.dockerServiceManager!, // Use the manager directly
-      apiClient
-    });
+    return new ZonosTextToAudioModel({ apiClient, modelId });
   }
 
   /**
-   * Get supported text-to-audio models (TextToAudioProvider interface)
+   * Check if the provider supports a given model ID
+   */
+  supportsTextToAudioModel(modelId: string): boolean {
+    return this.getAvailableModels().includes(modelId);
+  }
+
+  /**
+   * Get supported model IDs
    */
   getSupportedTextToAudioModels(): string[] {
     return this.getAvailableModels();
   }
 
   /**
-   * Check if provider supports a specific TTS model (TextToAudioProvider interface)
-   */
-  supportsTextToAudioModel(modelId: string): boolean {
-    return this.supportsModel(modelId);
-  }
-
-  /**
-   * Check if provider supports a specific model
-   */
-  supportsModel(modelId: string): boolean {
-    return this.getAvailableModels().includes(modelId);
-  }
-
-  /**
-   * Get provider information
-   */
-  getInfo() {
-    return {
-      description: 'Provides Zonos StyleTTS2 models via Docker containers',
-      dockerImage: 'kprinssu/zonos:latest',
-      defaultPort: 7860,
-      capabilities: [
-        'text-to-speech',
-        'voice-cloning',
-        'emotion-control',
-        'style-control',
-        'fast-generation'
-      ]
-    };
-  }
-
-  /**
-   * Configure the provider
-   */
-  async configure(config: ProviderConfig): Promise<void> {
-    this.config = config;
-    if (config.serviceUrl) {
-      const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
-      const serviceRegistry = ServiceRegistry.getInstance();
-      this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as DockerComposeService;
-      const serviceInfo = this.dockerServiceManager.getServiceInfo();
-      if (serviceInfo.ports && serviceInfo.ports.length > 0) {
-        const port = serviceInfo.ports[0];
-        this.apiClient = new ZonosAPIClient({ baseUrl: `http://localhost:${port}` });
-      }
-    }
-    // Docker providers typically don't need API keys, but may need service URLs
-    if (config.baseUrl && !this.apiClient) {
-      this.apiClient = new ZonosAPIClient({ baseUrl: config.baseUrl });
-    }
-  }
-
-  /**
-   * Check if provider is available
+   * Check if the provider is available and ready
    */
   async isAvailable(): Promise<boolean> {
-    try {
-      const status = await this.getServiceStatus();
-      return status.running && status.healthy;
-    } catch {
+    if (!this.dockerServiceManager) {
       return false;
     }
+    return this.dockerServiceManager.isServiceHealthy();
   }
 
   /**
-   * Get models for specific capability
+   * Get models for a specific capability
    */
   getModelsForCapability(capability: MediaCapability): ProviderModel[] {
-    if (capability !== MediaCapability.TEXT_TO_AUDIO) {
-      return [];
-    }
-
-    return this.getAvailableModels().map(modelId => ({
-      id: modelId,
-      name: this.getModelDisplayName(modelId),
-      description: `Zonos StyleTTS2 model: ${modelId}`,
-      capabilities: [MediaCapability.TEXT_TO_AUDIO],
-      parameters: {
-        // Emotion configuration
-        happiness: { type: 'number', min: 0.0, max: 1.0, default: 1.0, description: 'Happiness emotion level' },
-        sadness: { type: 'number', min: 0.0, max: 1.0, default: 0.05, description: 'Sadness emotion level' },
-        neutral: { type: 'number', min: 0.0, max: 1.0, default: 0.2, description: 'Neutral emotion level' },
-        
-        // Voice conditioning
-        speakingRate: { type: 'number', min: 5.0, max: 30.0, default: 15.0, description: 'Speaking rate (words per minute)' },
-        pitchStd: { type: 'number', min: 0.0, max: 300.0, default: 45.0, description: 'Pitch variation' },
-        vqScore: { type: 'number', min: 0.5, max: 0.8, default: 0.78, description: 'Voice quality score' },
-        
-        // Generation parameters
-        cfgScale: { type: 'number', min: 1.0, max: 5.0, default: 2.0, description: 'Classifier-free guidance scale' },
-        seed: { type: 'number', description: 'Random seed for reproducible output' },
-        
-        // Model selection
-        modelChoice: { 
-          type: 'string', 
-          enum: ['Zyphra/Zonos-v0.1-transformer', 'Zyphra/Zonos-v0.1-hybrid'], 
-          default: 'Zyphra/Zonos-v0.1-transformer',
-          description: 'Zonos model variant to use'
+    if (capability === MediaCapability.TEXT_TO_AUDIO) {
+      return this.getAvailableModels().map(id => ({
+        id,
+        name: `Zonos ${id}`,
+        description: `High-quality text-to-speech model: ${id}`,
+        capabilities: [MediaCapability.TEXT_TO_AUDIO],
+        parameters: {
+          'speed': { type: 'number', default: 1.0, range: [0.5, 2.0] },
+          'pitch': { type: 'number', default: 0, range: [-12, 12] },
+          'voice': { type: 'string', default: 'default' }
         },
-        
-        // Audio input for voice cloning
-        speakerAudio: { type: 'string', description: 'Path to speaker audio file for voice cloning' },
-        language: { type: 'string', default: 'en-us', description: 'Target language' }
-      }
-    }));
+        pricing: { inputCost: 0, outputCost: 0, currency: 'USD' },
+      }));
+    }
+    return [];
   }
 
   /**
-   * Get model display name
+   * Get a model by ID
    */
-  private getModelDisplayName(modelId: string): string {
-    const displayNames: Record<string, string> = {
-      'zonos-tts': 'Zonos TTS',
-      'zonos-docker-tts': 'Zonos TTS (Docker)',
-      'zonos-styletts2': 'Zonos StyleTTS2'
-    };
-
-    return displayNames[modelId] || modelId;
-  }
-
-  /**
-   * Get provider name
-   */
-  getName(): string {
-    return 'zonos-docker';
-  }
-
-  /**
-   * Get provider ID
-   */
-  getId(): string {
-    return 'zonos-docker';
-  }
-
-  /**
-   * Get provider type
-   */
-  getType(): string {
-    return 'docker';
-  }
-
-  /**
-   * Get provider metadata
-   */
-  getMetadata(): any {
-    return {
-      dockerImage: 'kprinssu/zonos:latest',
-      port: 7860,
-      healthCheckEndpoint: '/',
-      supportsVoiceCloning: true,
-      supportsEmotionControl: true,
-      supportedLanguages: ['en-us', 'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh'],
-      outputFormats: ['wav', 'mp3']
-    };
-  }
-
-  /**
-   * Get provider version
-   */
-  getVersion(): string {
-    return '1.0.0';
-  }
-
-  /**
-   * Get supported capabilities
-   */
-  getCapabilities(): MediaCapability[] {
-    return [MediaCapability.TEXT_TO_AUDIO];
-  }
-
-  /**
-   * Get all supported models
-   */
-  getSupportedModels(): string[] {
-    return this.getAvailableModels();
-  }
-
-  /**
-   * Get model by ID
-   */
-  async getModel(modelId: string): Promise<TextToAudioModel> {
+  async getModel(modelId: string): Promise<any> {
     return this.createTextToAudioModel(modelId);
   }
 
   /**
-   * Get provider description
+   * Get provider health status
    */
-  getDescription(): string {
-    return 'Zonos StyleTTS2 text-to-speech provider with Docker containerization';
-  }
-
-  /**
-   * Get pricing information (if any)
-   */
-  getPricing(): any {
-    return {
-      type: 'free',
-      description: 'Local Docker-based inference, no API costs'
-    };
-  }
-
-  /**
-   * Get rate limits (if any)
-   */
-  getRateLimits(): any {
-    return {
-      type: 'hardware-limited',
-      description: 'Limited by local hardware resources'
-    };
-  }
-
-  /**
-   * Get health status
-   */
-  async getHealth(): Promise<any> {
+  async getHealth() {
     const status = await this.getServiceStatus();
     return {
-      status: status.healthy ? 'healthy' : 'unhealthy',
-      running: status.running,
-      error: status.error
+      status: status.healthy ? 'healthy' as const : 'unhealthy' as const,
+      uptime: process.uptime(),
+      activeJobs: 0,
+      queuedJobs: 0,
     };
   }
 
   /**
-   * Test provider connection
+   * Configure the provider with ServiceRegistry
    */
-  async testConnection(): Promise<boolean> {
+  async configure(config: ProviderConfig): Promise<void> {
+    // Skip if already configured with the same service URL
+    if (this.dockerServiceManager && this.config?.serviceUrl === config.serviceUrl) {
+      console.log('♻️ Service already configured, reusing existing configuration');
+      return;
+    }
+
+    // If configuration is in progress, wait for it to complete
+    if (this.isConfiguring) {
+      console.log('⏳ Waiting for configuration to complete...');
+      let attempts = 0;
+      while (this.isConfiguring && attempts < 50) { // Max 5 seconds
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      if (this.dockerServiceManager) {
+        console.log('♻️ Using completed auto-configuration');
+        return;
+      }
+    }
+
+    this.isConfiguring = true;
+    
     try {
-      const apiClient = this.getAPIClient();
-      return await apiClient.isAvailable();
-    } catch {
-      return false;
+      this.config = config;
+      
+      // If serviceUrl is provided (e.g., GitHub URL), use ServiceRegistry
+      if (config.serviceUrl) {
+        const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
+        const serviceRegistry = ServiceRegistry.getInstance();
+        this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as any;
+        
+        // Configure API client with service port
+        const serviceInfo = this.dockerServiceManager.getServiceInfo();
+        if (serviceInfo.ports && serviceInfo.ports.length > 0) {
+          const port = serviceInfo.ports[0];
+          this.apiClient = new ZonosAPIClient({ baseUrl: `http://localhost:${port}` });
+        }
+        
+        console.log(`🔗 ZonosProvider configured to use service: ${config.serviceUrl}`);
+        return;
+      }
+      
+      // Fallback to direct configuration (legacy)
+      if (config.baseUrl && !this.apiClient) {
+        this.apiClient = new ZonosAPIClient({ baseUrl: config.baseUrl });
+      }
+    } finally {
+      this.isConfiguring = false;
     }
   }
-
 }
 
-// Self-register with the provider registry
 import { ProviderRegistry } from '../../../registry/ProviderRegistry';
-ProviderRegistry.getInstance().register('zonos-docker', ZonosDockerProvider);
+ProviderRegistry.getInstance().register('zonos', ZonosDockerProvider);

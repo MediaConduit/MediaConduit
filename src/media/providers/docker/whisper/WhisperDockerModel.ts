@@ -8,7 +8,7 @@
  */
 
 import { WhisperAPIClient } from './WhisperAPIClient';
-import { WhisperDockerService } from '../../../services/WhisperDockerService';
+// Remove the import - use ServiceRegistry instead
 import { Audio, Text, AudioRole } from '../../../assets/roles';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -20,7 +20,7 @@ import { AudioToTextModel, AudioToTextOptions } from '../../../models/abstracts/
  */
 export interface WhisperDockerModelConfig {
   apiClient?: WhisperAPIClient;
-  dockerService?: WhisperDockerService;
+  dockerService?: any; // Generic service type
   tempDir?: string;
 }
 
@@ -29,7 +29,7 @@ export interface WhisperDockerModelConfig {
  */
 export class WhisperDockerModel extends AudioToTextModel {
   private readonly apiClient: WhisperAPIClient;
-  private readonly dockerService: WhisperDockerService;
+  private readonly dockerService: any; // Generic service type
   private readonly tempDir: string;
 
   constructor(config: WhisperDockerModelConfig = {}) {
@@ -46,7 +46,7 @@ export class WhisperDockerModel extends AudioToTextModel {
 
     // Initialize dependencies
     this.apiClient = config.apiClient || new WhisperAPIClient();
-    this.dockerService = config.dockerService || new WhisperDockerService();
+    this.dockerService = config.dockerService || null; // No default service needed
     this.tempDir = config.tempDir || path.join(os.tmpdir(), 'whisper-docker');
 
     // Ensure temp directory exists
@@ -241,7 +241,7 @@ export class WhisperDockerModel extends AudioToTextModel {
   /**
    * Get Docker service for advanced operations
    */
-  getDockerService(): WhisperDockerService {
+  getDockerService(): any {
     return this.dockerService;
   }
 

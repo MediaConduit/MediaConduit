@@ -166,38 +166,42 @@ export class ServiceRegistry {
     
     console.log(`📥 Cloning service repository: ${owner}/${repo}@${ref}`);
 
-    const crypto = await import('crypto');
     const path = await import('path');
     const fs = await import('fs/promises');
     
-    const tmpDir = path.join(process.cwd(), 'temp', 'services', crypto.randomBytes(8).toString('hex'));
+    // Use repo name instead of random hex for reusability
+    const serviceDirName = `${owner}-${repo}`;
+    const tmpDir = path.join(process.cwd(), 'temp', 'services', serviceDirName);
     
     try {
-      // Clean up any existing directory first
-      await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-      await fs.mkdir(tmpDir, { recursive: true });
-
-      // Clone the repository
-      const { execSync } = await import('child_process');
-      const repoUrl = `https://github.com/${owner}/${repo}.git`;
-      const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
-      
-      try {
-        execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
-      } catch (gitError) {
-        // Fallback: try without branch specification
-        const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
-        execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
-      }
-
-      // Read MediaConduit.service.yml configuration
+      // Check if service is already cloned and has valid config
       const configPath = path.join(tmpDir, 'MediaConduit.service.yml');
-      const configExists = await fs.access(configPath).then(() => true).catch(() => false);
+      const serviceAlreadyExists = await fs.access(configPath).then(() => true).catch(() => false);
       
-      if (!configExists) {
-        throw new Error(`No MediaConduit.service.yml found in repository ${owner}/${repo}`);
+      if (serviceAlreadyExists) {
+        console.log(`♻️ Using existing service directory: ${serviceDirName}`);
+      } else {
+        console.log(`📂 Creating new service directory: ${serviceDirName}`);
+        
+        // Clean up any existing directory first
+        await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+        await fs.mkdir(tmpDir, { recursive: true });
+
+        // Clone the repository
+        const { execSync } = await import('child_process');
+        const repoUrl = `https://github.com/${owner}/${repo}.git`;
+        const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
+        
+        try {
+          execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
+        } catch (gitError) {
+          // Fallback: try without branch specification
+          const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
+          execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
+        }
       }
 
+      // Read MediaConduit.service.yml configuration (configPath already defined above)
       console.log(`📋 Reading service configuration from MediaConduit.service.yml`);
       const configContent = await fs.readFile(configPath, 'utf-8');
       

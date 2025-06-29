@@ -12,7 +12,7 @@ import {
   ProviderModel,
   ProviderConfig
 } from '../../../types/provider';
-import { WhisperDockerService } from '../../../services/WhisperDockerService';
+// Remove the import - use ServiceRegistry instead
 import { WhisperAPIClient } from './WhisperAPIClient';
 import { WhisperDockerModel } from './WhisperDockerModel';
 import { AudioToTextProvider } from '../../../capabilities';
@@ -28,10 +28,31 @@ export class WhisperDockerProvider implements MediaProvider, AudioToTextProvider
   readonly capabilities = [MediaCapability.AUDIO_TO_TEXT];
   readonly models: ProviderModel[] = [];
 
-  private dockerServiceManager?: DockerComposeService;
+  private dockerServiceManager?: any; // Generic service from ServiceRegistry
+  private config?: ProviderConfig;
   private apiClient?: WhisperAPIClient;
 
-  
+  constructor() {
+    // Auto-configure from environment variables (async but non-blocking)
+    this.autoConfigureFromEnv().catch(error => {
+      // Silent fail - provider will just not be available until manually configured
+    });
+  }
+
+  private async autoConfigureFromEnv(): Promise<void> {
+    const serviceUrl = process.env.WHISPER_SERVICE_URL || 'github:MediaConduit/whisper-service';
+    
+    try {
+      await this.configure({
+        serviceUrl: serviceUrl,
+        baseUrl: 'http://localhost:9000',
+        timeout: 300000,
+        retries: 1
+      });
+    } catch (error) {
+      console.warn(`[WhisperProvider] Auto-configuration failed: ${error.message}`);
+    }
+  }
 
   /**
    * Get the API client instance
@@ -44,31 +65,49 @@ export class WhisperDockerProvider implements MediaProvider, AudioToTextProvider
   }
 
   /**
+   * Get the Docker service instance from ServiceRegistry
+   */
+  protected getDockerService(): any {
+    if (!this.dockerServiceManager) {
+      throw new Error('Service not configured. Please call configure() first.');
+    }
+    return this.dockerServiceManager;
+  }
+
+  /**
    * Start the Docker service
    */
   async startService(): Promise<boolean> {
-    if (!this.dockerServiceManager) {
-      throw new Error('Docker service manager not initialized for WhisperDockerProvider');
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.startService === 'function') {
+        return await dockerService.startService();
+      } else {
+        console.error('Service not properly configured');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to start Docker service:', error);
+      return false;
     }
-    const started = await this.dockerServiceManager.startService();
-    
-    if (started) {
-      // Wait for service to be healthy
-      const healthy = await this.dockerServiceManager.waitForHealthy(30000);
-      return healthy;
-    }
-    
-    return false;
   }
 
   /**
    * Stop the Docker service
    */
   async stopService(): Promise<boolean> {
-    if (!this.dockerServiceManager) {
-      throw new Error('Docker service manager not initialized for WhisperDockerProvider');
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.stopService === 'function') {
+        return await dockerService.stopService();
+      } else {
+        console.error('Service not properly configured');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to stop Docker service:', error);
+      return false;
     }
-    return await this.dockerServiceManager.stopService();
   }
 
   /**
@@ -79,20 +118,22 @@ export class WhisperDockerProvider implements MediaProvider, AudioToTextProvider
     healthy: boolean;
     error?: string;
   }> {
-    if (!this.dockerServiceManager) {
-      return {
-        running: false,
-        healthy: false,
-        error: 'Docker service manager not initialized'
-      };
+    try {
+      const dockerService = this.getDockerService();
+      if (dockerService && typeof dockerService.getServiceStatus === 'function') {
+        const status = await dockerService.getServiceStatus();
+        return {
+          running: status.running || false,
+          healthy: status.health === 'healthy',
+          error: status.state === 'error' ? status.state : undefined
+        };
+      } else {
+        return { running: false, healthy: false };
+      }
+    } catch (error) {
+      console.error('Failed to get service status:', error);
+      return { running: false, healthy: false };
     }
-    const status = await this.dockerServiceManager.getServiceStatus();
-    
-    return {
-      running: status.running || false,
-      healthy: status.health === 'healthy',
-      error: status.state === 'error' ? status.state : undefined
-    };
   }
 
   /**
@@ -199,19 +240,27 @@ export class WhisperDockerProvider implements MediaProvider, AudioToTextProvider
    */
   async configure(config: ProviderConfig): Promise<void> {
     this.config = config;
+    
+    // If serviceUrl is provided (e.g., GitHub URL), use ServiceRegistry
     if (config.serviceUrl) {
       const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
       const serviceRegistry = ServiceRegistry.getInstance();
-      this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as DockerComposeService;
+      this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as any;
+      
+      // Configure API client with service port
       const serviceInfo = this.dockerServiceManager.getServiceInfo();
       if (serviceInfo.ports && serviceInfo.ports.length > 0) {
         const port = serviceInfo.ports[0];
-        this.apiClient = new WhisperAPIClient({ baseUrl: `http://localhost:${port}` });
+        this.apiClient = new WhisperAPIClient(`http://localhost:${port}`);
       }
+      
+      console.log(`🔗 WhisperProvider configured to use service: ${config.serviceUrl}`);
+      return;
     }
-    // Docker providers typically don't need API keys, but may need service URLs
+    
+    // Fallback to direct configuration (legacy)
     if (config.baseUrl && !this.apiClient) {
-      this.apiClient = new WhisperAPIClient({ baseUrl: config.baseUrl });
+      this.apiClient = new WhisperAPIClient(config.baseUrl);
     }
   }
 

@@ -7,7 +7,6 @@
 
 import { TextToAudioModel, TextToAudioOptions } from '../../../models/abstracts/TextToAudioModel';
 import { KokoroAPIClient, KokoroTTSRequest } from './KokoroAPIClient';
-import { KokoroDockerService } from '../../../services/KokoroDockerService';
 import { Text, Audio, TextRole, AudioRole, hasAudioRole } from '../../../assets/roles';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,7 +25,7 @@ export interface KokoroDockerTTSOptions extends TextToAudioOptions {
  */
 export interface KokoroDockerModelConfig {
   apiClient?: KokoroAPIClient;
-  dockerService?: KokoroDockerService;
+  dockerService?: any; // Generic service type  
   tempDir?: string;
 }
 
@@ -35,7 +34,7 @@ export interface KokoroDockerModelConfig {
  */
 export class KokoroDockerModel extends TextToAudioModel {
   private apiClient: KokoroAPIClient;
-  private dockerService: KokoroDockerService;
+  private dockerService: any; // Generic service type
   private tempDir: string;
 
   constructor(config: KokoroDockerModelConfig = {}) {
@@ -52,7 +51,7 @@ export class KokoroDockerModel extends TextToAudioModel {
 
     // Initialize dependencies
     this.apiClient = config.apiClient || new KokoroAPIClient();
-    this.dockerService = config.dockerService || new KokoroDockerService();
+    this.dockerService = config.dockerService || null; // No default service needed
     this.tempDir = config.tempDir || path.join(os.tmpdir(), 'kokoro-docker');
 
     // Ensure temp directory exists
@@ -365,7 +364,7 @@ export class KokoroDockerModel extends TextToAudioModel {
   /**
    * Get Docker service for advanced operations
    */
-  getDockerService(): KokoroDockerService {
+  getDockerService(): any {
     return this.dockerService;
   }
 

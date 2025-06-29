@@ -25,13 +25,10 @@ export async function initializeServices(): Promise<void> {
   
   // Import all service modules - this triggers their self-registration
   const serviceImports = [
-    () => import('../services/HuggingFaceDockerService'),
     () => import('../services/ChatterboxDockerService'),
-    () => import('../services/FFMPEGDockerService'),
-    () => import('../services/WhisperDockerService'),
-    () => import('../services/KokoroDockerService'),
-    () => import('../services/ZonosDockerService'),
-    () => import('../services/OllamaDockerService'),
+    // Remove: () => import('../services/WhisperDockerService'),
+    // Remove: () => import('../services/ZonosDockerService'), - Migrated to ServiceRegistry
+    // Remove: () => import('../services/OllamaDockerService'),
   ];
   
   // Import all services concurrently
