@@ -1,16 +1,15 @@
 import {
-  MediaProvider,
   ProviderType,
   MediaCapability,
   ProviderModel,
-  ProviderConfig,
 } from '../../../types/provider';
 import { OllamaAPIClient } from './OllamaAPIClient';
 import { TextToTextProvider } from '../../../capabilities';
 import { TextToTextModel } from '../../../models/abstracts/TextToTextModel';
 import { OllamaTextToTextModel } from './OllamaTextToTextModel';
+import { AbstractDockerProvider } from '../AbstractDockerProvider';
 
-export class OllamaDockerProvider implements MediaProvider, TextToTextProvider {
+export class OllamaDockerProvider extends AbstractDockerProvider implements TextToTextProvider {
   readonly id = 'ollama-docker';
   readonly name = 'Ollama Docker Provider';
   readonly type = ProviderType.LOCAL;
