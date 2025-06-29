@@ -1,0 +1,14 @@
+id: cowsay-service
+name: Cowsay Service
+description: A simple Docker service for generating cowsay ASCII art.
+docker:
+  composeFile: docker-compose.yml
+  serviceName: cowsay
+  image: cowsay-service
+  ports:
+    - 80
+  healthCheck:
+    url: http://localhost:80/cowsay
+version: "1.0.0"
+capabilities:
+  - TextToText
