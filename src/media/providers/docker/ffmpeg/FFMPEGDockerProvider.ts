@@ -14,7 +14,6 @@ import {
 } from '../../../types/provider';
 import { AudioToAudioProvider } from '../../../capabilities/interfaces/AudioToAudioProvider';
 import { VideoToAudioProvider } from '../../../capabilities/interfaces/VideoToAudioProvider';
-import { FFMPEGDockerService } from '../../../services/FFMPEGDockerService';
 
 export interface FFMPEGDockerConfig extends ProviderConfig {
   dockerImage?: string;
@@ -29,7 +28,9 @@ export interface FFMPEGDockerConfig extends ProviderConfig {
 export class FFMPEGDockerProvider implements MediaProvider, AudioToAudioProvider, VideoToAudioProvider {
   readonly id = 'ffmpeg-docker';
   readonly name = 'FFMPEG Docker Provider';
-  readonly type = ProviderType.LOCAL;  readonly capabilities = [
+  readonly type = ProviderType.LOCAL;
+  
+  readonly capabilities = [
     MediaCapability.TEXT_TO_VIDEO,
     MediaCapability.IMAGE_TO_VIDEO,
     MediaCapability.VIDEO_TO_VIDEO,
@@ -40,12 +41,13 @@ export class FFMPEGDockerProvider implements MediaProvider, AudioToAudioProvider
   ];
 
   private config: FFMPEGDockerConfig = {};
-  private dockerService: FFMPEGDockerService;
+  private dockerService: any; // Generic service from ServiceRegistry
+
   /**
    * Constructor automatically configures from environment variables
    */
   constructor() {
-    this.dockerService = new FFMPEGDockerService();
+    // Service will be configured via ServiceRegistry when configure() is called
     // Auto-configure from environment variables (async but non-blocking)
     this.autoConfigureFromEnv().catch(error => {
       // Silent fail - provider will just not be available until manually configured
@@ -56,10 +58,13 @@ export class FFMPEGDockerProvider implements MediaProvider, AudioToAudioProvider
    * Automatically configure from environment variables
    */
   private async autoConfigureFromEnv(): Promise<void> {
-    const serviceUrl = process.env.FFMPEG_SERVICE_URL || 'http://localhost:8006';
+    // Use GitHub service URL for dynamic loading
+    const serviceUrl = process.env.FFMPEG_SERVICE_URL || 'github:MediaConduit/ffmpeg-service';
     
-    try {      await this.configure({
-        baseUrl: serviceUrl,
+    try {
+      await this.configure({
+        serviceUrl: serviceUrl,
+        baseUrl: 'http://localhost:8006', // Default port for FFMPEG service
         timeout: 600000, // Longer timeout for video processing
         retries: 1
       });
@@ -149,10 +154,19 @@ export class FFMPEGDockerProvider implements MediaProvider, AudioToAudioProvider
         parameters: {}
       }
     ];
-  }
-  async configure(config: FFMPEGDockerConfig): Promise<void> {
+  }  async configure(config: FFMPEGDockerConfig): Promise<void> {
     this.config = { ...this.config, ...config };
     
+    // If serviceUrl is provided (e.g., GitHub URL), use ServiceRegistry
+    if (config.serviceUrl) {
+      const { ServiceRegistry } = await import('../../../registry/ServiceRegistry');
+      const serviceRegistry = ServiceRegistry.getInstance();
+      this.dockerService = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as any;
+      console.log(`🔗 FFMPEGDockerProvider configured to use service: ${config.serviceUrl}`);
+      return;
+    }
+    
+    // Fallback to local configuration (legacy)
     // TODO: Configure the Docker service when methods are available
     // await this.dockerService.configure({
     //   dockerImage: config.dockerImage || 'jrottenberg/ffmpeg:latest',
@@ -161,12 +175,13 @@ export class FFMPEGDockerProvider implements MediaProvider, AudioToAudioProvider
     //   maxConcurrent: config.maxConcurrent || 2
     // });
   }
-
   async isAvailable(): Promise<boolean> {
     try {
-      // TODO: Use actual service method when available
-      // return await this.dockerService.isAvailable();
-      return false; // Temporarily return false until service methods are implemented
+      // Check if we have a service configured and if it's healthy
+      if (this.dockerService && typeof this.dockerService.isServiceHealthy === 'function') {
+        return await this.dockerService.isServiceHealthy();
+      }
+      return false;
     } catch {
       return false;
     }
@@ -220,26 +235,39 @@ export class FFMPEGDockerProvider implements MediaProvider, AudioToAudioProvider
     });
   }
   */
-
-  // Service Management - TODO: Implement when service methods are available
+  // Service Management - Updated to use ServiceRegistry
   async start(): Promise<void> {
-    // TODO: await this.dockerService.start();
-    console.log('FFMPEG Docker service start - not implemented yet');
+    if (this.dockerService && typeof this.dockerService.startService === 'function') {
+      await this.dockerService.startService();
+      console.log('✅ FFMPEG Docker service started via ServiceRegistry');
+    } else {
+      console.log('⚠️ FFMPEG Docker service not configured with ServiceRegistry');
+    }
   }
 
   async stop(): Promise<void> {
-    // TODO: await this.dockerService.stop();
-    console.log('FFMPEG Docker service stop - not implemented yet');
+    if (this.dockerService && typeof this.dockerService.stopService === 'function') {
+      await this.dockerService.stopService();
+      console.log('🛑 FFMPEG Docker service stopped via ServiceRegistry');
+    } else {
+      console.log('⚠️ FFMPEG Docker service not configured with ServiceRegistry');
+    }
   }
 
   async restart(): Promise<void> {
-    // TODO: await this.dockerService.restart();
-    console.log('FFMPEG Docker service restart - not implemented yet');
-  }
-
-  async cleanup(): Promise<void> {
-    // TODO: await this.dockerService.cleanup();
-    console.log('FFMPEG Docker service cleanup - not implemented yet');
+    if (this.dockerService && typeof this.dockerService.restartService === 'function') {
+      await this.dockerService.restartService();
+      console.log('🔄 FFMPEG Docker service restarted via ServiceRegistry');
+    } else {
+      console.log('⚠️ FFMPEG Docker service not configured with ServiceRegistry');
+    }
+  }  async cleanup(): Promise<void> {
+    if (this.dockerService && typeof this.dockerService.cleanup === 'function') {
+      await this.dockerService.cleanup();
+      console.log('✅ FFMPEG Docker service completely cleaned up via ServiceRegistry');
+    } else {
+      console.log('⚠️ FFMPEG Docker service not configured with ServiceRegistry for cleanup');
+    }
   }
 
   // Health Check

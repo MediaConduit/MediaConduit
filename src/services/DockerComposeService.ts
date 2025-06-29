@@ -108,6 +108,41 @@ export class DockerComposeService {
       return false;
     }
   }
+  /**
+   * Complete cleanup - stops containers, removes them, and cleans up directories
+   */
+  async cleanup(): Promise<boolean> {
+    try {
+      console.log(`🧹 Cleaning up ${this.config.serviceName} service completely...`);
+
+      // First, stop and remove all containers and networks
+      const composeCmd = this.buildComposeCommand('down', '--volumes', '--remove-orphans');
+      
+      console.log(`🗑️ Running: ${composeCmd}`);
+      await this.executeCommand(composeCmd);
+
+      console.log(`✅ ${this.config.serviceName} containers and volumes removed`);      // If this is a dynamically cloned service (temp directory), remove the directory
+      if (this.config.workingDirectory && this.config.workingDirectory.includes('temp')) {
+        const fs = require('fs');
+        
+        if (fs.existsSync(this.config.workingDirectory)) {
+          console.log(`🗂️ Removing cloned service directory: ${this.config.workingDirectory}`);
+          
+          // Use Node.js built-in recursive removal (Node 14.14+)
+          await fs.promises.rm(this.config.workingDirectory, { recursive: true, force: true });
+          
+          console.log(`✅ Service directory cleaned up`);
+        }
+      }
+
+      console.log(`✅ ${this.config.serviceName} cleanup completed successfully`);
+      return true;
+
+    } catch (error) {
+      console.error(`❌ Failed to cleanup ${this.config.serviceName} service:`, error);
+      return false;
+    }
+  }
 
   /**
    * Check if the service is running

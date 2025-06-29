@@ -258,5 +258,5 @@ export class FFMPEGDockerService {
 }
 
 // Self-register with the service registry
-import { ServiceRegistry } from '../registry/ServiceRegistry';
-ServiceRegistry.getInstance().register('ffmpeg-docker', FFMPEGDockerService);
+// import { ServiceRegistry } from '../registry/ServiceRegistry';
+// ServiceRegistry.getInstance().register('ffmpeg-docker', FFMPEGDockerService);

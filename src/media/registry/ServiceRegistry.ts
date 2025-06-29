@@ -8,6 +8,7 @@
  */
 
 import { DockerComposeService } from '../../services/DockerComposeService';
+import * as path from 'path';
 
 /**
  * Docker service interface
@@ -202,7 +203,7 @@ export class ServiceRegistry {
       
       // Parse YAML configuration
       const yaml = await import('yaml');
-      const serviceConfig: MediaConduitServiceConfig = yaml.parse(configContent);
+      const serviceConfig: MediaConduitServiceConfig = yaml.default.parse(configContent);
       
       console.log(`✅ Loaded service config: ${serviceConfig.name} v${serviceConfig.version}`);
 
@@ -269,8 +270,9 @@ class ConfigurableDockerService implements DockerService {
     this.serviceConfig = serviceConfig;
     
     // Create DockerComposeService with the configuration
+    const composeFilePath = path.resolve(serviceDirectory, this.serviceConfig.docker.composeFile);
     this.dockerComposeService = new DockerComposeService({
-      composeFile: this.serviceConfig.docker.composeFile,
+      composeFile: composeFilePath,
       serviceName: this.serviceConfig.docker.serviceName,
       containerName: `${this.serviceConfig.name}-${this.serviceConfig.docker.serviceName}`,
       healthCheckUrl: this.serviceConfig.docker.healthCheck?.url || `http://localhost:${this.serviceConfig.docker.ports[0]}/health`,
@@ -328,6 +330,10 @@ class ConfigurableDockerService implements DockerService {
       network: `${this.serviceConfig.name}-network`,
       serviceDirectory: this.serviceDirectory
     };
+  }
+
+  async cleanup(): Promise<boolean> {
+    return this.dockerComposeService.cleanup();
   }
 }
 
