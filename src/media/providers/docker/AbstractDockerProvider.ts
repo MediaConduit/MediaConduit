@@ -94,7 +94,11 @@ export abstract class AbstractDockerProvider implements MediaProvider {
    */
   protected getDockerService(): any {
     if (!this.dockerServiceManager) {
-      throw new Error('Service not configured. Please call configure() first.');
+      // Auto-initialize if not configured yet
+      this.initializeService().catch(error => {
+        console.error(`Failed to auto-initialize service for ${this.id}:`, error);
+      });
+      throw new Error('Service initializing. Please wait for initialization to complete.');
     }
     return this.dockerServiceManager;
   }
@@ -104,6 +108,9 @@ export abstract class AbstractDockerProvider implements MediaProvider {
    */
   async startService(): Promise<boolean> {
     try {
+      // Ensure service is initialized before starting
+      await this.ensureInitialized();
+      
       const dockerService = this.getDockerService();
       if (dockerService && typeof dockerService.startService === 'function') {
         return await dockerService.startService();
@@ -198,9 +205,17 @@ export abstract class AbstractDockerProvider implements MediaProvider {
     console.log(`✅ ${this.id} configuration verified (service initialized in constructor)`);
   }
 
+  /**
+   * Get model - automatically ensure service is initialized
+   */
+  async getModel(modelId: string): Promise<any> {
+    // Ensure service is initialized before getting models
+    await this.ensureInitialized();
+    return this.createModel(modelId);
+  }
+
   // Abstract methods that subclasses must implement
   abstract getAvailableModels(): string[];
   abstract createModel(modelId: string): Promise<any>;
   abstract getModelsForCapability(capability: MediaCapability): ProviderModel[];
-  abstract getModel(modelId: string): Promise<any>;
 }

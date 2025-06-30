@@ -60,9 +60,10 @@ export interface MediaConduitServiceConfig {
     composeFile: string;
     serviceName: string;
     image?: string;
-    ports: number[];
+    ports?: number[]; // Made optional since not all services define ports
     healthCheck?: {
-      url: string;
+      url?: string;
+      endpoint?: string; // Alternative to url for relative endpoints
       interval?: string;
       timeout?: string;
       retries?: number;
@@ -320,10 +321,14 @@ class ConfigurableDockerService implements DockerService {
     this.serviceDirectory = serviceDirectory;
     this.serviceConfig = serviceConfig;
     
+    // CRITICAL FIX: Ensure ports array exists to prevent undefined.map() error
+    if (!this.serviceConfig.docker.ports || !Array.isArray(this.serviceConfig.docker.ports)) {
+      console.warn(`⚠️ No ports defined in service config, using default port 8080`);
+      this.serviceConfig.docker.ports = [8080]; // Default fallback
+    }
+    
     // Assign dynamic ports for any port specified as 0
-    // If no ports are configured, default to [0] for dynamic assignment
-    const configuredPorts = this.serviceConfig.docker.ports || [0];
-    this.assignedPorts = this.assignDynamicPorts(configuredPorts);
+    this.assignedPorts = this.assignDynamicPorts(this.serviceConfig.docker.ports);
     
     // Create DockerComposeService with the configuration
     const composeFilePath = path.resolve(serviceDirectory, this.serviceConfig.docker.composeFile);
@@ -346,6 +351,12 @@ class ConfigurableDockerService implements DockerService {
   }
 
   private assignDynamicPorts(configuredPorts: number[]): number[] {
+    // Add safety check to prevent crashes
+    if (!configuredPorts || !Array.isArray(configuredPorts)) {
+      console.warn('Invalid ports configuration, using default [8080]');
+      configuredPorts = [8080];
+    }
+    
     return configuredPorts.map(port => {
       if (port === 0) {
         // Assign a random available port
@@ -354,6 +365,24 @@ class ConfigurableDockerService implements DockerService {
         return dynamicPort;
       }
       return port;
+    });
+  }
+
+  private async findAvailablePortAsync(): Promise<number> {
+    const net = await import('net');
+    
+    return new Promise((resolve, reject) => {
+      const server = net.createServer();
+      server.listen(0, () => {
+        const port = (server.address() as any)?.port;
+        server.close(() => {
+          if (port) {
+            resolve(port);
+          } else {
+            reject(new Error('Could not determine assigned port'));
+          }
+        });
+      });
     });
   }
 
@@ -407,15 +436,15 @@ class ConfigurableDockerService implements DockerService {
       return url;
     }
     
-    // Check for endpoint (relative path)
-    if ((this.serviceConfig.docker.healthCheck as any)?.endpoint) {
-      const port = this.assignedPorts[0] || (this.serviceConfig.docker.ports && this.serviceConfig.docker.ports[0]) || 8080;
-      const endpoint = (this.serviceConfig.docker.healthCheck as any).endpoint;
+    // Check for endpoint (relative path) - this handles the Whisper service case
+    if (this.serviceConfig.docker.healthCheck?.endpoint) {
+      const port = this.assignedPorts[0] || (this.serviceConfig.docker.ports?.[0]) || 8080;
+      const endpoint = this.serviceConfig.docker.healthCheck.endpoint;
       return `http://localhost:${port}${endpoint}`;
     }
     
     // Fallback to default health check URL
-    const port = this.assignedPorts[0] || (this.serviceConfig.docker.ports && this.serviceConfig.docker.ports[0]) || 8080;
+    const port = this.assignedPorts[0] || (this.serviceConfig.docker.ports?.[0]) || 8080;
     return `http://localhost:${port}/health`;
   }
 
