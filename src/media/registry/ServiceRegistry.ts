@@ -285,22 +285,102 @@ class ConfigurableDockerService implements DockerService {
   private dockerComposeService: DockerComposeService;
   private serviceConfig: MediaConduitServiceConfig;
   private serviceDirectory: string;
+  private assignedPorts: number[] = []; // Track dynamically assigned ports
 
   constructor(serviceDirectory: string, serviceConfig: MediaConduitServiceConfig, userConfig?: any) {
     this.serviceDirectory = serviceDirectory;
     this.serviceConfig = serviceConfig;
     
+    // Assign dynamic ports for any port specified as 0
+    this.assignedPorts = this.assignDynamicPorts(this.serviceConfig.docker.ports);
+    
     // Create DockerComposeService with the configuration
     const composeFilePath = path.resolve(serviceDirectory, this.serviceConfig.docker.composeFile);
+    const healthCheckUrl = this.buildHealthCheckUrl();
+    
     this.dockerComposeService = new DockerComposeService({
       composeFile: composeFilePath,
       serviceName: this.serviceConfig.docker.serviceName,
       containerName: `${this.serviceConfig.name}-${this.serviceConfig.docker.serviceName}`,
-      healthCheckUrl: this.serviceConfig.docker.healthCheck?.url || `http://localhost:${this.serviceConfig.docker.ports[0]}/health`,
+      healthCheckUrl: healthCheckUrl,
       workingDirectory: serviceDirectory
     });
   }
+
+  private assignDynamicPorts(configuredPorts: number[]): number[] {
+    return configuredPorts.map(port => {
+      if (port === 0) {
+        // Assign a random available port
+        const dynamicPort = this.findAvailablePort();
+        console.log(`🔄 Dynamic port assignment: 0 → ${dynamicPort}`);
+        return dynamicPort;
+      }
+      return port;
+    });
+  }
+
+  private findAvailablePort(): number {
+    // For now, use a simple random port in the range 30000-40000
+    // In a production environment, you'd want to check if the port is actually available
+    const minPort = 30000;
+    const maxPort = 40000;
+    
+    // Try to find an available port by checking if it's in use
+    for (let attempts = 0; attempts < 10; attempts++) {
+      const port = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
+      
+      // Simple check - in a real implementation you'd use net.createServer() to test
+      // For now, just ensure we don't reuse ports in the same session
+      if (!this.isPortInUse(port)) {
+        this.markPortAsUsed(port);
+        return port;
+      }
+    }
+    
+    // Fallback if we can't find an available port
+    const fallbackPort = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
+    this.markPortAsUsed(fallbackPort);
+    return fallbackPort;
+  }
+
+  private isPortInUse(port: number): boolean {
+    // Simple session-based port tracking
+    // In production, you'd check actual port availability using net module
+    return ConfigurableDockerService.usedPorts.has(port);
+  }
+
+  private markPortAsUsed(port: number): void {
+    ConfigurableDockerService.usedPorts.add(port);
+  }
+
+  // Static set to track used ports across all service instances
+  private static usedPorts = new Set<number>();
+
+  private buildHealthCheckUrl(): string {
+    if (this.serviceConfig.docker.healthCheck?.url) {
+      let url = this.serviceConfig.docker.healthCheck.url;
+      
+      // Replace __PORT__ placeholder with the actual assigned port
+      if (url.includes('__PORT__') && this.assignedPorts.length > 0) {
+        url = url.replace('__PORT__', this.assignedPorts[0].toString());
+      }
+      
+      return url;
+    }
+    
+    // Fallback to default health check URL
+    const port = this.assignedPorts[0] || this.serviceConfig.docker.ports[0] || 8080;
+    return `http://localhost:${port}/health`;
+  }
+
   async startService(): Promise<boolean> {
+    // Set environment variables for dynamic ports before starting
+    if (this.assignedPorts.length > 0) {
+      const serviceNameUpper = this.serviceConfig.docker.serviceName.toUpperCase();
+      process.env[`${serviceNameUpper}_HOST_PORT`] = this.assignedPorts[0].toString();
+      console.log(`🌍 Set environment variable ${serviceNameUpper}_HOST_PORT=${this.assignedPorts[0]}`);
+    }
+    
     return this.dockerComposeService.startService();
   }
 
@@ -344,10 +424,10 @@ class ConfigurableDockerService implements DockerService {
     return {
       containerName: `${this.serviceConfig.name}-${this.serviceConfig.docker.serviceName}`,
       dockerImage: this.serviceConfig.docker.image || 'unknown',
-      ports: this.serviceConfig.docker.ports,
+      ports: this.assignedPorts.length > 0 ? this.assignedPorts : this.serviceConfig.docker.ports, // Use assigned ports if available
       composeService: this.serviceConfig.docker.serviceName,
       composeFile: this.serviceConfig.docker.composeFile,
-      healthCheckUrl: this.serviceConfig.docker.healthCheck?.url || `http://localhost:${this.serviceConfig.docker.ports[0]}/health`,
+      healthCheckUrl: this.buildHealthCheckUrl(),
       network: `${this.serviceConfig.name}-network`,
       serviceDirectory: this.serviceDirectory
     };
