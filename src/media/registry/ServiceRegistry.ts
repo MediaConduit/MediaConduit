@@ -427,10 +427,21 @@ class ConfigurableDockerService implements DockerService {
           console.log(`🌍 Updated environment variable ${serviceNameUpper}_HOST_PORT=${runningPorts[0]} (detected)`);
         }
       } else {
-        console.warn(`⚠️ Could not detect running ports for ${this.serviceConfig.name}, using configured ports`);
+        // Service not running - use dynamic port assignment (0) instead of configured ports
+        console.log(`🔍 Service not running, will use dynamic ports for startup`);
+        this.assignedPorts = [0]; // Force dynamic port assignment
+        
+        const serviceNameUpper = this.serviceConfig.docker.serviceName.toUpperCase();
+        process.env[`${serviceNameUpper}_HOST_PORT`] = '0';
+        console.log(`🌍 Set environment variable ${serviceNameUpper}_HOST_PORT=0 (dynamic)`);
       }
     } catch (error) {
       console.warn(`⚠️ Failed to detect running ports for ${this.serviceConfig.name}:`, error);
+      // Even on error, use dynamic ports for new services
+      this.assignedPorts = [0];
+      const serviceNameUpper = this.serviceConfig.docker.serviceName.toUpperCase();
+      process.env[`${serviceNameUpper}_HOST_PORT`] = '0';
+      console.log(`🌍 Set environment variable ${serviceNameUpper}_HOST_PORT=0 (fallback)`);
     }
   }
 
@@ -458,7 +469,15 @@ class ConfigurableDockerService implements DockerService {
     }
     
     console.log(`🚀 Starting service ${this.serviceConfig.name}...`);
-    return this.dockerComposeService.startService();
+    const startResult = await this.dockerComposeService.startService();
+    
+    // If service started successfully, detect the actual assigned ports
+    if (startResult) {
+      console.log(`🔍 Service started, detecting actual assigned ports...`);
+      await this.detectRunningPorts();
+    }
+    
+    return startResult;
   }
 
   async stopService(): Promise<boolean> {

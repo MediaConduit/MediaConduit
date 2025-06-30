@@ -21,6 +21,11 @@ export class DockerMediaProvider implements MediaProvider {
     this.name = name || `${this.id} (Docker)`;
   }
 
+  // Implement MediaProvider interface methods
+  async configure(config: ProviderConfig): Promise<void> {
+    // Docker-backed providers don't need additional configuration beyond Docker service setup
+  }
+
   async isAvailable(): Promise<boolean> {
     const status = await this.dockerServiceManager.getServiceStatus();
     return status.running && status.health === 'healthy';
