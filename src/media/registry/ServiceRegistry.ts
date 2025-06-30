@@ -172,43 +172,60 @@ export class ServiceRegistry {
     // Use repo name instead of random hex for reusability
     const serviceDirName = `${owner}-${repo}`;
     const tmpDir = path.join(process.cwd(), 'temp', 'services', serviceDirName);
+    const configPath = path.join(tmpDir, 'MediaConduit.service.yml');
     
     try {
-      // Check if service is already cloned and has valid config
-      const configPath = path.join(tmpDir, 'MediaConduit.service.yml');
-      const serviceAlreadyExists = await fs.access(configPath).then(() => true).catch(() => false);
+      // Clean up any existing directory first with better error handling
+      try {
+        const stats = await fs.stat(tmpDir);
+        if (stats.isDirectory()) {
+          console.log(`🧹 Cleaning existing service directory: ${tmpDir}`);
+          await fs.rm(tmpDir, { recursive: true, force: true });
+          console.log(`✅ Cleanup completed`);
+        }
+      } catch (cleanupError: any) {
+        if (cleanupError.code !== 'ENOENT') {
+          console.warn(`⚠️ Directory cleanup warning: ${cleanupError.message}`);
+          // On Windows, sometimes files are locked. Try alternative cleanup.
+          const { execSync } = await import('child_process');
+          try {
+            execSync(`rmdir /s /q "${tmpDir}"`, { stdio: 'pipe' });
+            console.log(`✅ Cleanup completed using Windows rmdir`);
+          } catch (rmError) {
+            console.warn(`⚠️ Windows rmdir also failed, proceeding anyway: ${rmError}`);
+          }
+        }
+      }
       
-      if (serviceAlreadyExists) {
-        console.log(`♻️ Using existing service directory: ${serviceDirName}`);
-      } else {
-        console.log(`📂 Creating new service directory: ${serviceDirName}`);
-        
-        // Clean up any existing directory first
-        await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-        await fs.mkdir(tmpDir, { recursive: true });
+      await fs.mkdir(tmpDir, { recursive: true });
 
-        // Clone the repository
-        const { execSync } = await import('child_process');
-        const repoUrl = `https://github.com/${owner}/${repo}.git`;
-        const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
-        
+      // Clone the repository
+      const { execSync } = await import('child_process');
+      const repoUrl = `https://github.com/${owner}/${repo}.git`;
+      const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
+      
+      try {
+        execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
+      } catch (gitError: any) {
+        console.error(`Git clone failed with branch ${ref}: ${gitError.stderr.toString()}`);
+        // Fallback: try without branch specification
+        const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
         try {
-          execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
-        } catch (gitError) {
-          // Fallback: try without branch specification
-          const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
           execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
+        } catch (fallbackGitError: any) {
+          console.error(`Git clone fallback failed: ${fallbackGitError.stderr.toString()}`);
+          throw fallbackGitError; // Re-throw the error if both attempts fail
         }
       }
 
-      // Read MediaConduit.service.yml configuration (configPath already defined above)
+      // Read MediaConduit.service.yml configuration
       console.log(`📋 Reading service configuration from MediaConduit.service.yml`);
       const configContent = await fs.readFile(configPath, 'utf-8');
       
       // Parse YAML configuration
       const yaml = await import('yaml');
       const serviceConfig: MediaConduitServiceConfig = yaml.default.parse(configContent);
-      
+      console.log('DEBUG: Parsed serviceConfig (before ConfigurableDockerService):', serviceConfig);
       console.log(`✅ Loaded service config: ${serviceConfig.name} v${serviceConfig.version}`);
 
       // Create DockerService with the configuration

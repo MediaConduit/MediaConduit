@@ -5,6 +5,7 @@
  * Eliminates code duplication by providing common service management functionality.
  */
 
+import { DockerComposeService } from '@/services/DockerComposeService';
 import { MediaProvider, ProviderConfig, ProviderModel, ProviderType } from '../../types/provider';
 import { MediaCapability } from '../../types/provider';
 
@@ -17,7 +18,7 @@ export abstract class AbstractDockerProvider implements MediaProvider {
   abstract readonly type: ProviderType;
   abstract readonly capabilities: MediaCapability[];
 
-  protected dockerServiceManager?: any; // Generic service from ServiceRegistry
+  protected dockerServiceManager?: DockerComposeService; // Generic service from ServiceRegistry
   protected config?: ProviderConfig;
   protected isConfiguring = false; // Prevent concurrent configuration
 
@@ -152,7 +153,7 @@ export abstract class AbstractDockerProvider implements MediaProvider {
       return false;
     }
     try {
-      return this.dockerServiceManager.isServiceHealthy();
+      return this.dockerServiceManager.waitForHealthy(30000);
     } catch (error) {
       return false;
     }
