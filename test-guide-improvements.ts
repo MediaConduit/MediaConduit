@@ -5,6 +5,7 @@
  */
 
 import { getProviderRegistry } from './src/media/registry/ProviderRegistry';
+import { DockerMediaProvider } from './src/media/providers/docker/DockerMediaProvider';
 
 async function testGuideImprovements() {
   console.log('🧪 Testing Dynamic Provider Migration Guide Improvements...');
@@ -16,7 +17,7 @@ async function testGuideImprovements() {
     
     // Load Ollama provider from GitHub (as per guide)
     console.log('🔄 Loading Ollama provider from GitHub...');
-    const provider = await registry.getProvider('https://github.com/MediaConduit/ollama-provider');
+    const provider = await registry.getProvider<DockerMediaProvider>('https://github.com/MediaConduit/ollama-provider');
     console.log('✅ Provider loaded:', provider.name);
     
     // Check if provider is available
@@ -25,7 +26,7 @@ async function testGuideImprovements() {
     
     if (!isAvailable) {
       console.log('⚠️  Provider not available - this is normal if Ollama service isn\'t running');
-      return;
+      await provider.startService();
     }
     
     // Configure the provider (learned this was necessary!)

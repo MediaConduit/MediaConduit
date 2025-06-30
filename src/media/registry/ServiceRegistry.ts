@@ -236,6 +236,9 @@ export class ServiceRegistry {
       // Create DockerService with the configuration
       const dockerService = new ConfigurableDockerService(tmpDir, serviceConfig, userConfig);
       
+      // Initialize port detection
+      await dockerService.initializePorts();
+      
       // Cache the service
       this.serviceCache.set(identifier, dockerService);
       
@@ -331,6 +334,13 @@ class ConfigurableDockerService implements DockerService {
       healthCheckUrl: healthCheckUrl,
       workingDirectory: serviceDirectory
     });
+  }
+  
+  /**
+   * Initialize port detection - should be called after construction
+   */
+  async initializePorts(): Promise<void> {
+    await this.detectRunningPorts();
   }
 
   private assignDynamicPorts(configuredPorts: number[]): number[] {
