@@ -38,6 +38,15 @@ async function testWhisperDynamicProvider() {
     const isAvailable = await provider.isAvailable();
     console.log('🏥 Provider available:', isAvailable);
     
+    // Debug: Check what URL the API client is actually using
+    if (typeof (provider as any).getAPIClient === 'function') {
+      const apiClient = (provider as any).getAPIClient();
+      if (apiClient && typeof apiClient.getBaseUrl === 'function') {
+        const actualBaseUrl = apiClient.getBaseUrl();
+        console.log('🔍 API Client Base URL:', actualBaseUrl);
+      }
+    }
+    
     // Check if provider has getModels method (our custom method)
     if (typeof (provider as any).getModels === 'function') {
       const models = await (provider as any).getModels();
