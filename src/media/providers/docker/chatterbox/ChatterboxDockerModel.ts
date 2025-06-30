@@ -9,7 +9,7 @@
 
 import { TextToAudioModel, TextToAudioOptions } from '../../../models/abstracts/TextToAudioModel';
 import { ChatterboxAPIClient } from './ChatterboxAPIClient';
-import { ChatterboxDockerService } from '../../../services/ChatterboxDockerService';
+// Use generic service type for better compatibility - service is provided by ServiceRegistry
 import { Text, Audio, TextRole, AudioRole, hasAudioRole } from '../../../assets/roles';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -25,7 +25,7 @@ export interface ChatterboxDockerTTSOptions extends TextToAudioOptions {
  */
 export interface ChatterboxDockerModelConfig {
   apiClient?: ChatterboxAPIClient;
-  dockerService?: ChatterboxDockerService;
+  dockerService?: any; // Generic service type
   tempDir?: string;
 }
 
@@ -34,7 +34,7 @@ export interface ChatterboxDockerModelConfig {
  */
 export class ChatterboxDockerModel extends TextToAudioModel {
   private readonly apiClient: ChatterboxAPIClient;
-  private readonly dockerService: ChatterboxDockerService;
+  private readonly dockerService: any; // Generic service type
   private readonly tempDir: string;
 
   constructor(config: ChatterboxDockerModelConfig = {}) {
@@ -51,7 +51,7 @@ export class ChatterboxDockerModel extends TextToAudioModel {
 
     // Initialize dependencies
     this.apiClient = config.apiClient || new ChatterboxAPIClient();
-    this.dockerService = config.dockerService || new ChatterboxDockerService();
+    this.dockerService = config.dockerService || null; // No default service needed
     this.tempDir = config.tempDir || path.join(os.tmpdir(), 'chatterbox-docker');
 
     // Ensure temp directory exists
@@ -316,7 +316,7 @@ export class ChatterboxDockerModel extends TextToAudioModel {
   /**
    * Get Docker service for advanced operations
    */
-  getDockerService(): ChatterboxDockerService {
+  getDockerService(): any {
     return this.dockerService;
   }
 

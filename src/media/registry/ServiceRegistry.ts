@@ -321,7 +321,9 @@ class ConfigurableDockerService implements DockerService {
     this.serviceConfig = serviceConfig;
     
     // Assign dynamic ports for any port specified as 0
-    this.assignedPorts = this.assignDynamicPorts(this.serviceConfig.docker.ports);
+    // If no ports are configured, default to [0] for dynamic assignment
+    const configuredPorts = this.serviceConfig.docker.ports || [0];
+    this.assignedPorts = this.assignDynamicPorts(configuredPorts);
     
     // Create DockerComposeService with the configuration
     const composeFilePath = path.resolve(serviceDirectory, this.serviceConfig.docker.composeFile);
@@ -393,6 +395,7 @@ class ConfigurableDockerService implements DockerService {
   private static usedPorts = new Set<number>();
 
   private buildHealthCheckUrl(): string {
+    // Check for full URL first
     if (this.serviceConfig.docker.healthCheck?.url) {
       let url = this.serviceConfig.docker.healthCheck.url;
       
@@ -404,8 +407,15 @@ class ConfigurableDockerService implements DockerService {
       return url;
     }
     
+    // Check for endpoint (relative path)
+    if ((this.serviceConfig.docker.healthCheck as any)?.endpoint) {
+      const port = this.assignedPorts[0] || (this.serviceConfig.docker.ports && this.serviceConfig.docker.ports[0]) || 8080;
+      const endpoint = (this.serviceConfig.docker.healthCheck as any).endpoint;
+      return `http://localhost:${port}${endpoint}`;
+    }
+    
     // Fallback to default health check URL
-    const port = this.assignedPorts[0] || this.serviceConfig.docker.ports[0] || 8080;
+    const port = this.assignedPorts[0] || (this.serviceConfig.docker.ports && this.serviceConfig.docker.ports[0]) || 8080;
     return `http://localhost:${port}/health`;
   }
 
@@ -520,7 +530,7 @@ class ConfigurableDockerService implements DockerService {
     return {
       containerName: `${this.serviceConfig.name}-${this.serviceConfig.docker.serviceName}`,
       dockerImage: this.serviceConfig.docker.image || 'unknown',
-      ports: this.assignedPorts.length > 0 ? this.assignedPorts : this.serviceConfig.docker.ports, // Use assigned ports if available
+      ports: this.assignedPorts.length > 0 ? this.assignedPorts : (this.serviceConfig.docker.ports || []), // Use assigned ports if available
       composeService: this.serviceConfig.docker.serviceName,
       composeFile: this.serviceConfig.docker.composeFile,
       healthCheckUrl: this.buildHealthCheckUrl(),

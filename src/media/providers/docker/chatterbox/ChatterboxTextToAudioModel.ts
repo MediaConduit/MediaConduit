@@ -9,7 +9,8 @@ import { TextToAudioModel, TextToAudioOptions } from '../../../models/abstracts/
 import { ModelMetadata } from '../../../models/abstracts/Model';
 import { Text, Audio, TextRole, AudioRole } from '../../../assets/roles';
 import { ChatterboxAPIClient } from './ChatterboxAPIClient';
-import { ChatterboxDockerService } from '../../../services/ChatterboxDockerService';
+// Use generic service type for better compatibility
+// import { ChatterboxDockerService } from '../../../services/ChatterboxDockerService';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createGenerationPrompt, extractInputContent } from '../../../utils/GenerationPromptHelper';
@@ -33,7 +34,7 @@ export interface VoiceInfo {
 
 export interface ChatterboxTextToAudioModelConfig {
   apiClient?: ChatterboxAPIClient;
-  dockerService?: ChatterboxDockerService;
+  dockerService?: any; // Generic service type
   baseUrl?: string;
   timeout?: number;
   tempDir?: string;
@@ -44,7 +45,7 @@ export interface ChatterboxTextToAudioModelConfig {
  */
 export class ChatterboxTextToAudioModel extends TextToAudioModel {
   private apiClient: ChatterboxAPIClient;
-  private dockerService: ChatterboxDockerService;
+  private dockerService: any; // Generic service type
   private tempDir: string;
 
   constructor(config: ChatterboxTextToAudioModelConfig = {}) {
@@ -63,7 +64,7 @@ export class ChatterboxTextToAudioModel extends TextToAudioModel {
 
     // Initialize API client and Docker service
     this.apiClient = config.apiClient || new ChatterboxAPIClient(config.baseUrl, config.timeout);
-    this.dockerService = config.dockerService || new ChatterboxDockerService();
+    this.dockerService = config.dockerService || null; // No default service needed
     this.tempDir = config.tempDir || path.join(process.cwd(), 'temp', 'chatterbox');
 
     // Ensure temp directory exists
@@ -443,7 +444,7 @@ export class ChatterboxTextToAudioModel extends TextToAudioModel {
   /**
    * Get Docker service for advanced operations
    */
-  getDockerService(): ChatterboxDockerService {
+  getDockerService(): any {
     return this.dockerService;
   }
 

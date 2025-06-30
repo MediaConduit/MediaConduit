@@ -6,10 +6,10 @@
 
 import { initializeProviders, ProviderRegistry } from './src/media/registry/bootstrap';
 import { initializeServices, ServiceRegistry } from './src/media/registry/serviceBootstrap';
+import { MediaCapability } from './src/media/types/provider';
 
 async function testDynamicRegistries() {
-  console.log('🧪 Testing Dynamic Provider and Service Registries
-');
+  console.log('🧪 Testing Dynamic Provider and Service Registries');
 
   // Test Provider Registry
   console.log('\n📦 PROVIDER REGISTRY TESTS:');
@@ -42,7 +42,7 @@ async function testDynamicRegistries() {
     if (githubProvider.type !== 'local') {
       throw new Error('GitHub provider type mismatch');
     }
-    if (!githubProvider.capabilities.includes('video-to-video')) {
+    if (!githubProvider.capabilities.includes(MediaCapability.AUDIO_TO_TEXT)) {
       throw new Error('GitHub provider capabilities mismatch');
     }
   } catch (error) {
