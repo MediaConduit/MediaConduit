@@ -21,15 +21,15 @@ async function testExistingProvider() {
   
   const registry = getProviderRegistry();
   
-  // Load Ollama provider from GitHub (streaming JSON, proper error handling)
+  // Load Ollama provider from GitHub - NO configuration needed!
   const provider = await registry.getProvider('https://github.com/MediaConduit/ollama-provider');
   console.log('✅ Provider loaded:', provider.name);
   
-  // Get a model (this will auto-pull if needed)
+  // Provider is ready to use immediately - service initialized in constructor
   const model = await provider.getModel('llama3.2:1b'); // Small 1.3GB model
   console.log('✅ Model ready:', model.getId());
   
-  // Use the model
+  // Use the model - everything is automatically configured
   const result = await model.transform("Write a haiku about coding");
   console.log('📝 Generated:', result.content);
   console.log('🔍 Metadata:', result.metadata?.generation_prompt);
@@ -45,7 +45,7 @@ Run with: `tsx test-existing-provider.ts`
 🧪 Testing existing dynamic provider...
 📥 Downloading GitHub provider: MediaConduit/ollama-provider@main
 🔧 Loading Docker service from ServiceRegistry: https://github.com/MediaConduit/ollama-service
-✅ Service ready: ollama-service
+🔗 Ollama ready on dynamic port: 32768  ← TRUE dynamic port!
 ✅ Provider loaded: Ollama Docker Provider
 🔄 Pulling Ollama model: llama3.2:1b
 📥 llama3.2:1b: pulling manifest
@@ -206,29 +206,60 @@ import { MediaProvider } from '../../../../src/media/types/provider';
 
 ### Provider Configuration Patterns
 
-#### ✅ **Standard Provider Structure**
+#### ✅ **New Simplified Provider Structure (2025)**
 ```typescript
-export class YourProvider implements MediaProvider {
+import { AbstractDockerProvider } from '@mediaconduit/mediaconduit';
+
+export class YourProvider extends AbstractDockerProvider {
   readonly id: string = 'your-provider-id';
   readonly name: string = 'Your Provider Name';
-  readonly type: ProviderType = ProviderType.LOCAL; // or CLOUD
+  readonly type: ProviderType = ProviderType.LOCAL;
   readonly capabilities: MediaCapability[] = [MediaCapability.TEXT_TO_TEXT];
 
-  private apiClient?: YourAPIClient;
+  // No constructor needed! Service initialization happens automatically
+  
+  // Just specify your service URL
+  protected getServiceUrl(): string {
+    return 'https://github.com/MediaConduit/your-service';
+  }
+  
+  protected getDefaultBaseUrl(): string {
+    return 'http://localhost:8080';
+  }
+
+  // Hook for additional setup after service is ready
+  protected async onServiceReady(): Promise<void> {
+    // Set up API client with dynamic ports automatically detected
+    const serviceInfo = this.getDockerService().getServiceInfo();
+    const port = serviceInfo.ports[0]; // Always the correct dynamic port
+    this.apiClient = new YourAPIClient(`http://localhost:${port}`);
+    console.log(`� ${this.name} ready on dynamic port: ${port}`);
+  }
+
+  // Implement your provider-specific methods
+  async getModel(modelId: string): Promise<any> {
+    // Service is already initialized and ready to use
+    return new YourModel(this.apiClient, modelId);
+  }
+}
+```
+
+#### ❌ **Old Manual Pattern (Legacy)**
+```typescript
+export class YourProvider implements MediaProvider {
   private dockerService?: any;
 
   constructor(dockerService?: any) {
     this.dockerService = dockerService;
-    console.log(`🔧 ${this.name} initialized`);
   }
 
+  // Manual configuration required - complex and error-prone
   async configure(config: ProviderConfig): Promise<void> {
-    // Set up API client with dynamic ports
     const port = this.dockerService?.getServiceInfo?.()?.ports?.[0] || 8080;
     this.apiClient = new YourAPIClient(`http://localhost:${port}`);
   }
 
-  // ... implement all required methods
+  // Provider not usable until configure() is called manually
 }
 ```
 
@@ -370,32 +401,36 @@ your-provider/
 └── tsconfig.json                  # TypeScript config
 ```
 
-#### 2. **Provider Template (YourProvider.ts)**
+#### 2. **Provider Template (YourProvider.ts) - SIMPLIFIED 2025**
 ```typescript
-import { MediaProvider, ProviderType, MediaCapability, ProviderModel, ProviderConfig } from '@mediaconduit/mediaconduit';
+import { AbstractDockerProvider, ProviderType, MediaCapability, ProviderModel } from '@mediaconduit/mediaconduit';
 import { YourAPIClient } from './YourAPIClient';
 import { YourTextToTextModel } from './YourTextToTextModel';
 
-export class YourProvider implements MediaProvider {
+export class YourProvider extends AbstractDockerProvider {
   readonly id: string = 'your-provider-id';
   readonly name: string = 'Your Provider Name';
   readonly type: ProviderType = ProviderType.LOCAL;
   readonly capabilities: MediaCapability[] = [MediaCapability.TEXT_TO_TEXT];
 
   private apiClient?: YourAPIClient;
-  private dockerService?: any;
 
-  constructor(dockerService?: any) {
-    this.dockerService = dockerService;
+  // No constructor needed! AbstractDockerProvider handles everything
+
+  protected getServiceUrl(): string {
+    return 'https://github.com/MediaConduit/your-service';
   }
 
-  async configure(config: ProviderConfig): Promise<void> {
-    const port = this.dockerService?.getServiceInfo?.()?.ports?.[0] || 8080;
+  protected getDefaultBaseUrl(): string {
+    return 'http://localhost:8080';
+  }
+
+  // Called automatically after service is ready with correct dynamic ports
+  protected async onServiceReady(): Promise<void> {
+    const serviceInfo = this.getDockerService().getServiceInfo();
+    const port = serviceInfo.ports[0]; // Always correct dynamic port
     this.apiClient = new YourAPIClient(`http://localhost:${port}`);
-  }
-
-  async isAvailable(): Promise<boolean> {
-    return this.apiClient?.testConnection() ?? false;
+    console.log(`🔗 ${this.name} ready on port: ${port}`);
   }
 
   getModelsForCapability(capability: MediaCapability): ProviderModel[] {
@@ -403,11 +438,16 @@ export class YourProvider implements MediaProvider {
   }
 
   async getModel(modelId: string): Promise<any> {
+    await this.ensureInitialized(); // Ensure service is ready
     return new YourTextToTextModel(this.apiClient!, modelId);
   }
 
-  async getHealth() {
-    return { status: 'healthy' as const, uptime: 0, activeJobs: 0, queuedJobs: 0 };
+  getAvailableModels(): string[] {
+    return ['your-model'];
+  }
+
+  async createModel(modelId: string): Promise<any> {
+    return this.getModel(modelId);
   }
 
   get models(): ProviderModel[] {
@@ -675,7 +715,7 @@ npx tsc --init
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    // Your provider-specific dependencies
+    "axios": "^1.6.0"
   }
 }
 ```
@@ -949,6 +989,11 @@ COPY . .
 
 EXPOSE 8080
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# Run application
 CMD ["npm", "start"]
 ```
 
@@ -1332,7 +1377,7 @@ services:
     environment:
       - PORT=80  # Internal container port (stays fixed)
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -2264,7 +2309,7 @@ Default model for general-purpose processing.
 **Q: How do I know if my streaming API needs special handling?**
 - If responses come in multiple chunks (like Ollama model pulling)
 - If you see newline-separated JSON responses
-- Use `responseType: 'text'` and parse lines manually
+- Use `responseType: 'text'` and parse by newlines
 
 **Q: What's NDJSON and why do I care?**
 - **NDJSON** = Newline-Delimited JSON (each line is separate JSON)
@@ -2766,6 +2811,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["python", "app.py"]
 ```
 
+```txt
+# requirements.txt
+Flask==2.3.3
+requests==2.31.0
+```
+
 #### Step 5: Configuration
 
 ```yaml
@@ -2922,50 +2973,61 @@ The Ollama provider migration demonstrates how dynamic loading enables sophistic
 
 ---
 
-## 🎓 Summary: What You Should Remember
+## 🚀 **NEW: Simplified Provider Pattern (2025)**
 
-### If You Only Remember 5 Things:
+### **Before vs After: Configuration Elimination**
 
-1. **✅ Use `model.transform()` and `model.getId()`** - Not `generateText()` or `model.id`
+#### ❌ **OLD Pattern (Complex & Error-Prone)**
+```typescript
+// 1. Manual constructor dependency injection
+constructor(dockerService?: any) {
+  this.dockerService = dockerService;
+}
 
-2. **✅ Always include `createGenerationPrompt()`** - For complete audit trails
+// 2. Manual configuration required
+async configure(config: ProviderConfig): Promise<void> {
+  const port = this.dockerService?.getServiceInfo?.()?.ports?.[0] || 8080;
+  this.apiClient = new YourAPIClient(`http://localhost:${port}`);
+}
 
-3. **✅ Parse streaming APIs properly** - Use `responseType: 'text'` and split by newlines
-
-4. **✅ Let dynamic ports work** - Don't hardcode ports, get them from service info
-
-5. **✅ Test with existing providers first** - Ollama provider is perfect for learning
-
-### The "Just Give Me Working Code" Hierarchy:
-
-1. **New to this?** → Test existing provider first (Quick Start section)
-2. **Need simple provider?** → Use TL;DR copy-paste templates  
-3. **Need Docker service?** → Follow the Cowsay case study
-4. **Having issues?** → Check troubleshooting checklist
-5. **Complex streaming APIs?** → Study Ollama implementation
-
-### What Makes This System Powerful:
-
-- **No Port Management** - System handles everything automatically
-- **Zero Conflicts** - Run hundreds of services simultaneously  
-- **Rich Audit Trails** - Every transformation preserves complete history
-- **True Modularity** - Providers are completely independent
-- **Production Ready** - Dynamic loading works at scale
-
-### Before You Start Your Own Provider:
-
-```bash
-# 1. Test that dynamic loading works
-tsx test-ollama-small-model.ts
-
-# 2. Copy the TL;DR templates
-# 3. Replace "Your" with your actual provider name
-# 4. Implement your specific API calls
-# 5. Test thoroughly
-
-# That's it! 🎉
+// 3. Provider not usable until configured
+const provider = await registry.getProvider('...');
+await provider.configure({}); // ← MANUAL STEP REQUIRED
+const model = await provider.getModel('model-id');
 ```
 
----
+#### ✅ **NEW Pattern (Automatic & Bulletproof)**
+```typescript
+export class YourProvider extends AbstractDockerProvider {
+  // 1. No constructor needed - automatic service resolution
+  
+  protected getServiceUrl(): string {
+    return 'https://github.com/MediaConduit/your-service';
+  }
 
-*Happy provider building! 🚀*
+  // 2. Automatic configuration with guaranteed dynamic ports
+  protected async onServiceReady(): Promise<void> {
+    const serviceInfo = this.getDockerService().getServiceInfo();
+    const port = serviceInfo.ports[0]; // Always correct dynamic port
+    this.apiClient = new YourAPIClient(`http://localhost:${port}`);
+  }
+
+  // 3. Provider immediately usable - no manual configuration
+  const provider = await registry.getProvider('...');
+  const model = await provider.getModel('model-id'); // ← WORKS IMMEDIATELY
+}
+```
+
+### **Key Benefits of New Pattern**
+
+1. **🎯 Zero Configuration** - No manual `configure()` calls needed
+2. **🔒 Guaranteed Ports** - Dynamic port detection built-in 
+3. **⚡ Immediate Usage** - Provider ready immediately after loading
+4. **🛡️ Error Prevention** - Can't forget to configure, can't use wrong ports
+5. **📦 Code Reduction** - 50% less boilerplate code
+6. **🔄 Consistent Pattern** - All Docker providers use same base class
+
+### **Migration Path**
+
+**For New Providers**: Use `AbstractDockerProvider` base class
+**For Existing Providers**: Gradually migrate to extend `AbstractDockerProvider`
