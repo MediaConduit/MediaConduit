@@ -21,12 +21,6 @@ export class DockerMediaProvider implements MediaProvider {
     this.name = name || `${this.id} (Docker)`;
   }
 
-  async configure(config: ProviderConfig): Promise<void> {
-    // Configuration for the underlying Docker service is handled by ServiceRegistry
-    // This method can be used to pass additional configuration to the Docker service if needed
-    console.log(`Configuring DockerMediaProvider for ${this.id} with config:`, config);
-  }
-
   async isAvailable(): Promise<boolean> {
     const status = await this.dockerServiceManager.getServiceStatus();
     return status.running && status.health === 'healthy';

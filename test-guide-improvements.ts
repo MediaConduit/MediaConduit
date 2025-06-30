@@ -5,7 +5,6 @@
  */
 
 import { getProviderRegistry } from './src/media/registry/ProviderRegistry';
-import { DockerMediaProvider } from './src/media/providers/docker/DockerMediaProvider';
 
 async function testGuideImprovements() {
   console.log('🧪 Testing Dynamic Provider Migration Guide Improvements...');
@@ -17,7 +16,7 @@ async function testGuideImprovements() {
     
     // Load Ollama provider from GitHub (as per guide)
     console.log('🔄 Loading Ollama provider from GitHub...');
-    const provider = await registry.getProvider<DockerMediaProvider>('https://github.com/MediaConduit/ollama-provider');
+    const provider = await registry.getProvider('https://github.com/MediaConduit/ollama-provider');
     console.log('✅ Provider loaded:', provider.name);
     
     // Check if provider is available
@@ -26,14 +25,14 @@ async function testGuideImprovements() {
     
     if (!isAvailable) {
       console.log('⚠️  Provider not available - this is normal if Ollama service isn\'t running');
-      await provider.startService();
+      await (provider as any).startService();
     }
     
-    // Configure the provider (learned this was necessary!)
+    // Configure the provider (still needed for current Ollama implementation)
     console.log('\n🔧 Configuring provider...');
-    await provider.configure({});
+    await (provider as any).configure({});
     console.log('✅ Provider configured');
-    
+
     // Get a model (this will auto-pull if needed)
     console.log('\n🔄 Getting model (will auto-pull if needed)...');
     const model = await provider.getModel('llama3.2:1b'); // Small 1.3GB model as per guide

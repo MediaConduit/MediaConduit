@@ -18,42 +18,60 @@ export abstract class AbstractDockerProvider implements MediaProvider {
   abstract readonly type: ProviderType;
   abstract readonly capabilities: MediaCapability[];
 
-  protected dockerServiceManager?: DockerComposeService; // Generic service from ServiceRegistry
-  protected config?: ProviderConfig;
-  protected isConfiguring = false; // Prevent concurrent configuration
+  protected dockerServiceManager?: DockerComposeService;
+  private initializationPromise?: Promise<void>;
 
   constructor() {
-    // Auto-configure from environment variables (async but non-blocking)
-    this.autoConfigureFromEnv().catch(error => {
-      // Silent fail - provider will just not be available until manually configured
+    // Immediately start service initialization
+    this.initializationPromise = this.initializeService().catch(error => {
+      console.error(`Failed to initialize ${this.id}:`, error);
     });
   }
 
   /**
-   * Auto-configure from environment variables
-   * Override in subclasses to provide service-specific configuration
+   * Initialize the service from ServiceRegistry
    */
-  protected async autoConfigureFromEnv(): Promise<void> {
-    // Skip if already configuring or configured
-    if (this.isConfiguring || this.dockerServiceManager) {
+  private async initializeService(): Promise<void> {
+    const serviceUrl = this.getServiceUrl();
+    if (!serviceUrl) {
+      console.warn(`No service URL provided for ${this.id}`);
       return;
     }
-    
-    const serviceUrl = this.getServiceUrl();
-    if (!serviceUrl) return;
-    
+
     try {
-      await this.configure({
-        serviceUrl: serviceUrl,
-        baseUrl: this.getDefaultBaseUrl(),
-        timeout: 300000,
-        retries: 1
-      });
+      const { ServiceRegistry } = await import('../../registry/ServiceRegistry');
+      const serviceRegistry = ServiceRegistry.getInstance();
+      this.dockerServiceManager = await serviceRegistry.getService(serviceUrl) as any;
+      
+      console.log(`🔗 ${this.id} initialized with service: ${serviceUrl}`);
+      
+      // Call hook for additional setup
+      await this.onServiceReady();
+      
     } catch (error) {
-      console.warn(`[${this.id}] Auto-configuration failed: ${error.message}`);
+      console.error(`Failed to initialize service for ${this.id}:`, error);
+      throw error;
     }
   }
 
+  /**
+   * Ensure service is initialized before use
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+    }
+  }
+
+  /**
+   * Hook called after service is ready
+   * Override in subclasses to perform additional setup
+   */
+  protected async onServiceReady(): Promise<void> {
+    // Default implementation does nothing
+  }
+
+  
   /**
    * Get service URL from environment - override in subclasses
    */
@@ -171,68 +189,13 @@ export abstract class AbstractDockerProvider implements MediaProvider {
   }
 
   /**
-   * Configure the provider with ServiceRegistry
+   * Configure the provider - simplified since initialization happens in constructor
    */
   async configure(config: ProviderConfig): Promise<void> {
-    // Skip if already configured with the same service URL
-    if (this.dockerServiceManager && this.config?.serviceUrl === config.serviceUrl) {
-      console.log('♻️ Service already configured, reusing existing configuration');
-      return;
-    }
-
-    // If configuration is in progress, wait for it to complete
-    if (this.isConfiguring) {
-      console.log('⏳ Waiting for configuration to complete...');
-      let attempts = 0;
-      while (this.isConfiguring && attempts < 50) { // Max 5 seconds
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-      }
-      if (this.dockerServiceManager) {
-        console.log('♻️ Using completed auto-configuration');
-        return;
-      }
-    }
-
-    this.isConfiguring = true;
-    
-    try {
-      this.config = config;
-      
-      // If serviceUrl is provided (e.g., GitHub URL), use ServiceRegistry
-      if (config.serviceUrl) {
-        const { ServiceRegistry } = await import('../../registry/ServiceRegistry');
-        const serviceRegistry = ServiceRegistry.getInstance();
-        this.dockerServiceManager = await serviceRegistry.getService(config.serviceUrl, config.serviceConfig) as any;
-        
-        // Post-configuration hook for subclasses
-        await this.onServiceConfigured();
-        
-        console.log(`🔗 ${this.id} configured to use service: ${config.serviceUrl}`);
-        return;
-      }
-      
-      // Fallback configuration hook for subclasses
-      await this.onFallbackConfiguration(config);
-    } finally {
-      this.isConfiguring = false;
-    }
-  }
-
-  /**
-   * Hook called after service is configured via ServiceRegistry
-   * Override in subclasses to perform additional setup
-   */
-  protected async onServiceConfigured(): Promise<void> {
-    // Default implementation does nothing
-  }
-
-  /**
-   * Hook called for fallback configuration (when no serviceUrl)
-   * Override in subclasses to handle direct configuration
-   */
-  protected async onFallbackConfiguration(config: ProviderConfig): Promise<void> {
-    // Default implementation does nothing
+    // Service initialization happens in constructor, so this is essentially a no-op
+    // Just ensure we're initialized
+    await this.ensureInitialized();
+    console.log(`✅ ${this.id} configuration verified (service initialized in constructor)`);
   }
 
   // Abstract methods that subclasses must implement
