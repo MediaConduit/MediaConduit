@@ -102,7 +102,7 @@ export class ProviderRegistry {
   /**
    * Get a provider by ID or URL with lazy instantiation
    */
-  public async getProvider(identifier: string): Promise<MediaProvider> {
+  public async getProvider<T extends MediaProvider>(identifier: string): Promise<T> {
     // Handle static providers (existing behavior)
     if (this.providers.has(identifier)) {
       // Check cache first
@@ -128,7 +128,7 @@ export class ProviderRegistry {
 
     // Handle dynamic providers (new behavior)
     if (this.isDynamicIdentifier(identifier)) {
-      return this.loadDynamicProvider(identifier);
+      return this.loadDynamicProvider(identifier) as unknown as T;
     }
 
     throw new ProviderNotFoundError(identifier);
@@ -290,55 +290,73 @@ export class ProviderRegistry {
     const providerConfigPath = path.join(tmpDir, 'MediaConduit.provider.yml');
 
     try {
-      // Clean up any existing directory first with better error handling
+      // Check if provider directory already exists and is valid
+      let needsClone = true;
+      let needsInstall = true;
+      
       try {
         const stats = await fs.stat(tmpDir);
         if (stats.isDirectory()) {
-          console.log(`🧹 Cleaning existing provider directory: ${tmpDir}`);
-          await fs.rm(tmpDir, { recursive: true, force: true });
-          console.log(`✅ Cleanup completed`);
-        }
-      } catch (cleanupError: any) {
-        if (cleanupError.code !== 'ENOENT') {
-          console.warn(`⚠️ Directory cleanup warning: ${cleanupError.message}`);
-          // On Windows, sometimes files are locked. Try alternative cleanup.
+          // Check if it's a valid provider directory
           try {
-            execSync(`rmdir /s /q "${tmpDir}"`, { stdio: 'pipe' });
-            console.log(`✅ Cleanup completed using Windows rmdir`);
-          } catch (rmError) {
-            console.warn(`⚠️ Windows rmdir also failed, proceeding anyway: ${rmError}`);
+            await fs.access(providerConfigPath);
+            console.log(`📂 Provider directory already exists: ${tmpDir}`);
+            needsClone = false;
+            
+            // Check if node_modules exists
+            try {
+              await fs.access(path.join(tmpDir, 'node_modules'));
+              needsInstall = false;
+              console.log(`📦 Dependencies already installed`);
+            } catch {
+              console.log(`📦 Dependencies need to be installed`);
+            }
+          } catch {
+            console.log(`🧹 Invalid provider directory found, will re-clone`);
+            await fs.rm(tmpDir, { recursive: true, force: true });
+          }
+        }
+      } catch (statError: any) {
+        if (statError.code !== 'ENOENT') {
+          console.warn(`⚠️ Directory stat warning: ${statError.message}`);
+        }
+      }
+
+      if (needsClone) {
+        await fs.mkdir(tmpDir, { recursive: true });
+
+        // Clone the repository
+        console.log(`📥 Cloning provider repository: ${owner}/${repo}@${ref}`);
+        const repoUrl = `https://github.com/${owner}/${repo}.git`;
+        const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
+        
+        try {
+          execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
+          console.log(`✅ Repository cloned successfully`);
+        } catch (gitError: any) {
+          console.error(`Git clone failed with branch ${ref}: ${gitError.stderr.toString()}`);
+          // Fallback: try without branch specification
+          const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
+          try {
+            execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
+            console.log(`✅ Repository cloned successfully (fallback)`);
+          } catch (fallbackGitError: any) {
+            console.error(`Git clone fallback failed: ${fallbackGitError.stderr.toString()}`);
+            throw fallbackGitError; // Re-throw the error if both attempts fail
           }
         }
       }
-      
-      await fs.mkdir(tmpDir, { recursive: true });
 
-      // Clone the repository
-      const repoUrl = `https://github.com/${owner}/${repo}.git`;
-      const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
-      
-      try {
-        execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
-      } catch (gitError: any) {
-        console.error(`Git clone failed with branch ${ref}: ${gitError.stderr.toString()}`);
-        // Fallback: try without branch specification
-        const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
+      // Install dependencies only if needed
+      if (needsInstall) {
+        console.log(`📦 Installing provider dependencies...`);
         try {
-          execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
-        } catch (fallbackGitError: any) {
-          console.error(`Git clone fallback failed: ${fallbackGitError.stderr.toString()}`);
-          throw fallbackGitError; // Re-throw the error if both attempts fail
+          execSync('npm install', { cwd: tmpDir, stdio: 'pipe', timeout: 180000 });
+          console.log(`✅ Dependencies installed successfully`);
+        } catch (installError: any) {
+          console.warn(`⚠️ Failed to install dependencies: ${installError.message}`);
+          // Continue anyway - some providers might not need dependencies
         }
-      }
-
-      // Install dependencies
-      console.log(`📦 Installing provider dependencies...`);
-      try {
-        execSync('npm install', { cwd: tmpDir, stdio: 'pipe', timeout: 180000 });
-        console.log(`✅ Dependencies installed successfully`);
-      } catch (installError: any) {
-        console.warn(`⚠️ Failed to install dependencies: ${installError.message}`);
-        // Continue anyway - some providers might not need dependencies
       }
 
       // Read MediaConduit.provider.yml configuration
@@ -598,10 +616,41 @@ export class ProviderRegistry {
   }
 
   /**
-   * Clear the provider cache
+   * Clear the provider cache and optionally force reload from source
    */
-  public clearCache(): void {
+  public clearCache(forceReload: boolean = false): void {
     this.providerCache.clear();
+    
+    if (forceReload) {
+      console.log('🔄 Forcing reload of all cached providers on next access');
+      // Note: Actual directories will be cleaned up on next load
+    }
+  }
+
+  /**
+   * Force refresh a specific provider (clears cache and re-downloads)
+   */
+  public async refreshProvider(identifier: string): Promise<void> {
+    // Remove from cache
+    this.providerCache.delete(identifier);
+    
+    // If it's a dynamic provider, clean up its directory
+    if (this.isDynamicIdentifier(identifier)) {
+      try {
+        const parsed = this.parseIdentifier(identifier);
+        if (parsed.type === 'github') {
+          const path = await import('path');
+          const fs = await import('fs/promises');
+          const serviceDirName = `${parsed.owner}-${parsed.repo}`;
+          const tmpDir = path.join(process.cwd(), 'temp', 'providers', serviceDirName);
+          
+          await fs.rm(tmpDir, { recursive: true, force: true });
+          console.log(`🧹 Cleared provider directory for refresh: ${tmpDir}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Failed to clean up provider directory:`, error);
+      }
+    }
   }
 
   /**

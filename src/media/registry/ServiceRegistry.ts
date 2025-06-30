@@ -175,46 +175,51 @@ export class ServiceRegistry {
     const configPath = path.join(tmpDir, 'MediaConduit.service.yml');
     
     try {
-      // Clean up any existing directory first with better error handling
+      // Check if service directory already exists and is valid
+      let needsClone = true;
+      
       try {
         const stats = await fs.stat(tmpDir);
         if (stats.isDirectory()) {
-          console.log(`🧹 Cleaning existing service directory: ${tmpDir}`);
-          await fs.rm(tmpDir, { recursive: true, force: true });
-          console.log(`✅ Cleanup completed`);
-        }
-      } catch (cleanupError: any) {
-        if (cleanupError.code !== 'ENOENT') {
-          console.warn(`⚠️ Directory cleanup warning: ${cleanupError.message}`);
-          // On Windows, sometimes files are locked. Try alternative cleanup.
-          const { execSync } = await import('child_process');
+          // Check if it's a valid service directory
           try {
-            execSync(`rmdir /s /q "${tmpDir}"`, { stdio: 'pipe' });
-            console.log(`✅ Cleanup completed using Windows rmdir`);
-          } catch (rmError) {
-            console.warn(`⚠️ Windows rmdir also failed, proceeding anyway: ${rmError}`);
+            await fs.access(configPath);
+            console.log(`📂 Service directory already exists: ${tmpDir}`);
+            needsClone = false;
+          } catch {
+            console.log(`🧹 Invalid service directory found, will re-clone`);
+            await fs.rm(tmpDir, { recursive: true, force: true });
           }
         }
+      } catch (statError: any) {
+        if (statError.code !== 'ENOENT') {
+          console.warn(`⚠️ Directory stat warning: ${statError.message}`);
+        }
       }
-      
-      await fs.mkdir(tmpDir, { recursive: true });
 
-      // Clone the repository
-      const { execSync } = await import('child_process');
-      const repoUrl = `https://github.com/${owner}/${repo}.git`;
-      const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
-      
-      try {
-        execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
-      } catch (gitError: any) {
-        console.error(`Git clone failed with branch ${ref}: ${gitError.stderr.toString()}`);
-        // Fallback: try without branch specification
-        const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
+      if (needsClone) {
+        await fs.mkdir(tmpDir, { recursive: true });
+
+        // Clone the repository
+        console.log(`📥 Cloning service repository: ${owner}/${repo}@${ref}`);
+        const { execSync } = await import('child_process');
+        const repoUrl = `https://github.com/${owner}/${repo}.git`;
+        const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
+        
         try {
-          execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
-        } catch (fallbackGitError: any) {
-          console.error(`Git clone fallback failed: ${fallbackGitError.stderr.toString()}`);
-          throw fallbackGitError; // Re-throw the error if both attempts fail
+          execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
+          console.log(`✅ Repository cloned successfully`);
+        } catch (gitError: any) {
+          console.error(`Git clone failed with branch ${ref}: ${gitError.stderr.toString()}`);
+          // Fallback: try without branch specification
+          const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
+          try {
+            execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
+            console.log(`✅ Repository cloned successfully (fallback)`);
+          } catch (fallbackGitError: any) {
+            console.error(`Git clone fallback failed: ${fallbackGitError.stderr.toString()}`);
+            throw fallbackGitError; // Re-throw the error if both attempts fail
+          }
         }
       }
 
@@ -264,18 +269,41 @@ export class ServiceRegistry {
   }
 
   /**
-   * Clear the service cache
+   * Clear the service cache and optionally clean up directories
    */
-  public clearCache(): void {
+  public clearCache(forceReload: boolean = false): void {
     this.serviceCache.clear();
+    
+    if (forceReload) {
+      console.log('🔄 Forcing reload of all cached services on next access');
+    }
   }
 
   /**
-   * Get registry statistics
+   * Force refresh a specific service (clears cache and re-downloads)
    */
-  public getStats(): { cachedServices: number } {
-    return { cachedServices: this.serviceCache.size };
+  public async refreshService(identifier: string): Promise<void> {
+    // Remove from cache
+    this.serviceCache.delete(identifier);
+    
+    // Clean up service directory
+    if (this.isGitHubUrl(identifier)) {
+      try {
+        const { owner, repo } = this.parseGitHubUrl(identifier);
+        const path = await import('path');
+        const fs = await import('fs/promises');
+        const serviceDirName = `${owner}-${repo}`;
+        const tmpDir = path.join(process.cwd(), 'temp', 'services', serviceDirName);
+        
+        await fs.rm(tmpDir, { recursive: true, force: true });
+        console.log(`🧹 Cleared service directory for refresh: ${tmpDir}`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to clean up service directory:`, error);
+      }
+    }
   }
+
+  // ...existing code...
 }
 
 /**
@@ -374,6 +402,17 @@ class ConfigurableDockerService implements DockerService {
   }
 
   async startService(): Promise<boolean> {
+    // Check if service is already running
+    try {
+      const status = await this.getServiceStatus();
+      if (status.running) {
+        console.log(`🔄 Service ${this.serviceConfig.name} is already running`);
+        return true;
+      }
+    } catch (error) {
+      console.log(`🔍 Service status check failed, proceeding with startup: ${error}`);
+    }
+
     // Set environment variables for dynamic ports before starting
     if (this.assignedPorts.length > 0) {
       const serviceNameUpper = this.serviceConfig.docker.serviceName.toUpperCase();
@@ -381,6 +420,7 @@ class ConfigurableDockerService implements DockerService {
       console.log(`🌍 Set environment variable ${serviceNameUpper}_HOST_PORT=${this.assignedPorts[0]}`);
     }
     
+    console.log(`🚀 Starting service ${this.serviceConfig.name}...`);
     return this.dockerComposeService.startService();
   }
 

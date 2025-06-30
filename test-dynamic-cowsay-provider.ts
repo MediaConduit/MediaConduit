@@ -1,3 +1,4 @@
+import { DockerMediaProvider } from '@/media/providers/docker/DockerMediaProvider';
 import { ProviderRegistry } from './src/media/registry/ProviderRegistry';
 
 async function testDynamicCowsayProvider() {
@@ -43,14 +44,14 @@ async function testDynamicCowsayProvider() {
     // Test GitHub loading (repo is now available!)
     console.log('\n🐙 Testing GitHub provider loading...');
     try {
-      const githubProvider = await registry.getProvider('https://github.com/MediaConduit/cowsay-provider');
+      const githubProvider = await registry.getProvider<DockerMediaProvider>('https://github.com/MediaConduit/cowsay-provider');
       console.log(`✅ GitHub provider loaded: ${githubProvider.name} (${githubProvider.id})`);
       console.log(`🎯 Type: ${githubProvider.type}`);
       console.log(`⚡ Capabilities: ${githubProvider.capabilities.join(', ')}`);
       
       // Start the Docker service
       console.log(`🐳 Starting cowsay Docker service...`);
-      const serviceStarted = await (githubProvider as any).startService();
+      const serviceStarted = await githubProvider.startService();
       console.log(`� Service start result: ${serviceStarted}`);
       
       // Wait a moment for service to be ready
@@ -74,6 +75,7 @@ async function testDynamicCowsayProvider() {
           const githubResult = await githubModel.generate('Hello from GitHub dynamic provider!');
           console.log('📤 GitHub provider result:');
           console.log(githubResult.content);
+          await githubProvider.stopService();
         } else {
           console.log('⚠️  GitHub service not running - skipping generation test');
         }

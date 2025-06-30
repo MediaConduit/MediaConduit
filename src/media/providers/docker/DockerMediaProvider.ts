@@ -63,6 +63,10 @@ export class DockerMediaProvider implements MediaProvider {
 
   // Implement ServiceManagement interface methods (delegating to DockerComposeService)
   async startService(): Promise<boolean> {
+    if(await this.dockerServiceManager.isServiceRunning()) {
+      return true;
+    }
+    
     return this.dockerServiceManager.startService();
   }
 
