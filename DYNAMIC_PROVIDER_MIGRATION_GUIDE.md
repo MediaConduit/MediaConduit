@@ -3,6 +3,87 @@
 
 ---
 
+## 🚀 Quick Start: "I Just Want to Test a Provider"
+
+### If You're New to This Process:
+
+**STOP HERE FIRST** - Read this section before diving into the detailed guide below.
+
+#### 1. **Test an Existing Dynamic Provider (5 minutes)**
+The fastest way to understand how this works is to test an existing provider:
+
+```typescript
+// test-existing-provider.ts
+import { getProviderRegistry } from './src/media/registry/ProviderRegistry';
+
+async function testExistingProvider() {
+  console.log('🧪 Testing existing dynamic provider...');
+  
+  const registry = getProviderRegistry();
+  
+  // Load Ollama provider from GitHub (streaming JSON, proper error handling)
+  const provider = await registry.getProvider('https://github.com/MediaConduit/ollama-provider');
+  console.log('✅ Provider loaded:', provider.name);
+  
+  // Get a model (this will auto-pull if needed)
+  const model = await provider.getModel('llama3.2:1b'); // Small 1.3GB model
+  console.log('✅ Model ready:', model.getId());
+  
+  // Use the model
+  const result = await model.transform("Write a haiku about coding");
+  console.log('📝 Generated:', result.content);
+  console.log('🔍 Metadata:', result.metadata?.generation_prompt);
+}
+
+testExistingProvider().catch(console.error);
+```
+
+Run with: `tsx test-existing-provider.ts`
+
+#### 2. **What You Should See (Success Pattern)**
+```
+🧪 Testing existing dynamic provider...
+📥 Downloading GitHub provider: MediaConduit/ollama-provider@main
+🔧 Loading Docker service from ServiceRegistry: https://github.com/MediaConduit/ollama-service
+✅ Service ready: ollama-service
+✅ Provider loaded: Ollama Docker Provider
+🔄 Pulling Ollama model: llama3.2:1b
+📥 llama3.2:1b: pulling manifest
+📥 llama3.2:1b: success
+✅ Model ready: llama3.2:1b
+📝 Generated: Code flows like streams / Bugs are rocks in the water / Debugging clears paths
+🔍 Metadata: { input: "Write a haiku about coding", options: {...}, modelId: "llama3.2:1b", ... }
+```
+
+#### 3. **Common First-Time Issues & Quick Fixes**
+
+| Problem | Quick Fix |
+|---------|-----------|
+| `Cannot find module '@mediaconduit/mediaconduit'` | Start Verdaccio: `docker run -d -p 4873:4873 verdaccio/verdaccio` |
+| Docker service won't start | Check Docker is running: `docker ps` |
+| Port conflicts | Services use dynamic ports automatically - no action needed |
+| "Model not found after pull" | Normal for non-existent models - try real model names |
+
+#### 4. **Key Concepts (Read These First)**
+
+- **Providers = GitHub Repos**: Providers are loaded directly from GitHub URLs
+- **Services = Docker Containers**: Some providers need Docker services (auto-managed)
+- **Dynamic Ports**: No port conflicts - system assigns ports automatically
+- **Streaming APIs**: Many providers use streaming responses (properly handled)
+- **Generation History**: All transformations preserve complete audit trails
+
+#### 5. **Ready to Create Your Own?**
+Once the above test works, jump to these sections:
+- [Creating a Simple Provider](#creating-a-simple-provider) (no Docker service)
+- [Creating a Provider with Service](#creating-a-provider-with-service) (with Docker)
+- [Common Patterns](#common-patterns) (copy-paste examples)
+
+---
+
+## 📋 Table of Contents
+
+---
+
 ### Table of Contents
 
 1. [Introduction](#introduction)
@@ -17,6 +98,139 @@
 10. [Best Practices](#best-practices)
 11. [Troubleshooting](#troubleshooting)
 12. [Case Study: Cowsay Provider](#case-study-cowsay-provider)
+13. [Case Study: Ollama Provider](#case-study-ollama-provider)
+
+---
+
+## 🎯 Common Patterns & Gotchas
+
+**READ THIS BEFORE IMPLEMENTING** - These patterns would have saved hours of debugging:
+
+### TextToTextModel API Patterns
+
+#### ✅ **Correct Model Usage**
+```typescript
+// Use transform() method, not generateText()
+const result = await model.transform(input, options);
+
+// Use getId() method, not .id property
+console.log('Model ID:', model.getId());
+
+// Preserve generation history properly
+return Text.fromString(
+  response,
+  text.language || 'auto',
+  1.0,
+  {
+    processingTime,
+    model: this.modelId,
+    provider: 'your-provider',
+    generation_prompt: createGenerationPrompt({
+      input: input, // RAW input to preserve chains
+      options: options,
+      modelId: this.modelId,
+      modelName: this.modelName,
+      provider: 'your-provider',
+      transformationType: 'text-to-text',
+      processingTime
+    })
+  },
+  text.sourceAsset // Preserve source references
+);
+```
+
+#### ❌ **Common Mistakes**
+```typescript
+// Wrong: Using non-existent methods
+const result = await model.generateText(input); // Doesn't exist
+console.log('Model:', model.id); // Returns undefined
+
+// Wrong: Losing generation history
+return Text.fromString(response); // No metadata = lost history
+
+// Wrong: Not handling streaming APIs properly
+const response = await fetch('/api/pull', { body: JSON.stringify({name: model}) });
+// Needs NDJSON parsing for streaming responses
+```
+
+### Streaming API Handling (Ollama, etc.)
+
+#### ✅ **Proper Streaming Response Parsing**
+```typescript
+async pullModel(modelName: string): Promise<boolean> {
+  // Configure for streaming text response
+  const response = await this.client.post('/api/pull', { name: modelName }, {
+    responseType: 'text', // Get raw text to parse NDJSON
+    timeout: 300000
+  });
+
+  // Parse NDJSON (newline-delimited JSON)
+  const lines = response.data.split('\n').filter(line => line.trim());
+  let hasError = false;
+  
+  for (const line of lines) {
+    try {
+      const json = JSON.parse(line);
+      if (json.error) {
+        console.error(`❌ Error: ${json.error}`);
+        hasError = true;
+        break;
+      }
+      if (json.status) {
+        console.log(`📥 ${modelName}: ${json.status}`);
+      }
+    } catch (parseError) {
+      continue; // Skip invalid JSON lines
+    }
+  }
+  
+  return !hasError;
+}
+```
+
+### Import Patterns for External Providers
+
+#### ✅ **Correct Imports**
+```typescript
+// Use published package imports
+import { createGenerationPrompt } from '@mediaconduit/mediaconduit/src/media/utils/GenerationPromptHelper';
+import { MediaProvider, ProviderType, MediaCapability } from '@mediaconduit/mediaconduit';
+import { TextToTextModel, TextToTextOptions, Text } from '@mediaconduit/mediaconduit';
+```
+
+#### ❌ **Wrong Imports**
+```typescript
+// Don't use relative paths to MediaConduit source
+import { MediaProvider } from '../../../../src/media/types/provider';
+```
+
+### Provider Configuration Patterns
+
+#### ✅ **Standard Provider Structure**
+```typescript
+export class YourProvider implements MediaProvider {
+  readonly id: string = 'your-provider-id';
+  readonly name: string = 'Your Provider Name';
+  readonly type: ProviderType = ProviderType.LOCAL; // or CLOUD
+  readonly capabilities: MediaCapability[] = [MediaCapability.TEXT_TO_TEXT];
+
+  private apiClient?: YourAPIClient;
+  private dockerService?: any;
+
+  constructor(dockerService?: any) {
+    this.dockerService = dockerService;
+    console.log(`🔧 ${this.name} initialized`);
+  }
+
+  async configure(config: ProviderConfig): Promise<void> {
+    // Set up API client with dynamic ports
+    const port = this.dockerService?.getServiceInfo?.()?.ports?.[0] || 8080;
+    this.apiClient = new YourAPIClient(`http://localhost:${port}`);
+  }
+
+  // ... implement all required methods
+}
+```
 
 ---
 
@@ -135,6 +349,187 @@ graph TB
   - `MediaConduit.service.yml` - Service metadata
   - `docker-compose.yml` - Service orchestration
   - Application code (Python, Node.js, etc.)
+
+---
+
+## 📄 TL;DR: Copy-Paste Templates
+
+### Quick Provider Template (5 minutes)
+
+#### 1. **Provider File Structure**
+```
+your-provider/
+├── src/
+│   ├── index.ts                   # export { YourProvider as default } from './YourProvider';
+│   ├── YourProvider.ts            # Main provider class
+│   ├── YourAPIClient.ts           # HTTP client
+│   ├── YourTextToTextModel.ts     # Model implementation
+│   └── types.ts                   # TypeScript interfaces
+├── MediaConduit.provider.yml      # Provider metadata
+├── package.json                   # Dependencies + scripts
+└── tsconfig.json                  # TypeScript config
+```
+
+#### 2. **Provider Template (YourProvider.ts)**
+```typescript
+import { MediaProvider, ProviderType, MediaCapability, ProviderModel, ProviderConfig } from '@mediaconduit/mediaconduit';
+import { YourAPIClient } from './YourAPIClient';
+import { YourTextToTextModel } from './YourTextToTextModel';
+
+export class YourProvider implements MediaProvider {
+  readonly id: string = 'your-provider-id';
+  readonly name: string = 'Your Provider Name';
+  readonly type: ProviderType = ProviderType.LOCAL;
+  readonly capabilities: MediaCapability[] = [MediaCapability.TEXT_TO_TEXT];
+
+  private apiClient?: YourAPIClient;
+  private dockerService?: any;
+
+  constructor(dockerService?: any) {
+    this.dockerService = dockerService;
+  }
+
+  async configure(config: ProviderConfig): Promise<void> {
+    const port = this.dockerService?.getServiceInfo?.()?.ports?.[0] || 8080;
+    this.apiClient = new YourAPIClient(`http://localhost:${port}`);
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return this.apiClient?.testConnection() ?? false;
+  }
+
+  getModelsForCapability(capability: MediaCapability): ProviderModel[] {
+    return [{ id: 'your-model', name: 'Your Model', capabilities: [capability] }];
+  }
+
+  async getModel(modelId: string): Promise<any> {
+    return new YourTextToTextModel(this.apiClient!, modelId);
+  }
+
+  async getHealth() {
+    return { status: 'healthy' as const, uptime: 0, activeJobs: 0, queuedJobs: 0 };
+  }
+
+  get models(): ProviderModel[] {
+    return this.getModelsForCapability(MediaCapability.TEXT_TO_TEXT);
+  }
+}
+```
+
+#### 3. **Model Template (YourTextToTextModel.ts)**
+```typescript
+import { TextToTextModel, TextToTextOptions, Text, TextRole } from '@mediaconduit/mediaconduit';
+import { createGenerationPrompt } from '@mediaconduit/mediaconduit/src/media/utils/GenerationPromptHelper';
+import { YourAPIClient } from './YourAPIClient';
+
+export class YourTextToTextModel extends TextToTextModel {
+  private apiClient: YourAPIClient;
+  private modelId: string;
+
+  constructor(apiClient: YourAPIClient, modelId: string) {
+    super({
+      id: modelId,
+      name: `Your Model ${modelId}`,
+      description: `Your model description`,
+      version: '1.0.0',
+      provider: 'your-provider',
+      capabilities: ['text-to-text'],
+      inputTypes: ['text/plain'],
+      outputTypes: ['text/plain']
+    });
+    this.apiClient = apiClient;
+    this.modelId = modelId;
+  }
+
+  async transform(input: TextRole | TextRole[] | string | string[], options?: TextToTextOptions): Promise<Text> {
+    const start = Date.now();
+    
+    // Handle input conversion
+    let text: Text;
+    if (Array.isArray(input)) {
+      text = typeof input[0] === 'string' ? Text.fromString(input[0]) : await input[0].asRole(Text);
+    } else {
+      text = typeof input === 'string' ? Text.fromString(input) : await input.asRole(Text);
+    }
+
+    // Call your API
+    const response = await this.apiClient.generateText(text.content, options);
+    const processingTime = Date.now() - start;
+
+    // Return with proper metadata
+    return Text.fromString(
+      response,
+      text.language || 'auto',
+      1.0,
+      {
+        processingTime,
+        model: this.modelId,
+        provider: 'your-provider',
+        generation_prompt: createGenerationPrompt({
+          input: input,
+          options: options,
+          modelId: this.modelId,
+          modelName: this.getName(),
+          provider: 'your-provider',
+          transformationType: 'text-to-text',
+          processingTime
+        })
+      },
+      text.sourceAsset
+    );
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return this.apiClient.testConnection();
+  }
+}
+```
+
+#### 4. **Configuration Template (MediaConduit.provider.yml)**
+```yaml
+id: your-provider-id
+name: Your Provider Name
+description: Brief description of what your provider does
+version: 1.0.0
+author: Your Name
+type: local
+capabilities:
+  - text-to-text
+
+# If you need a Docker service:
+serviceUrl: https://github.com/MediaConduit/your-service
+serviceConfig:
+  dockerCompose: docker-compose.yml
+  serviceName: your-service
+  healthEndpoint: /health
+  defaultBaseUrl: http://localhost:8080
+
+models:
+  - id: your-model
+    name: Your Model
+    capabilities:
+      - text-to-text
+```
+
+#### 5. **Package.json Template**
+```json
+{
+  "name": "your-provider",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@mediaconduit/mediaconduit": "^1.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
+```
 
 ---
 
@@ -309,15 +704,34 @@ serviceConfig:
 
 # Provider models
 models:
-  - id: my-model-default
-    name: My Model Default
-    description: Default model for my provider
-    capabilities:
-      - text-to-text
-    inputTypes:
-      - text/plain
-    outputTypes:
-      - text/plain
+  - id: my-model-fast
+    name: My Model (Fast)
+    description: Fast processing model
+    capabilities: [text-to-text]
+    inputTypes: [text/plain]
+    outputTypes: [text/plain]
+    parameters:
+      maxTokens: 1000
+      temperature: 0.7
+  
+  - id: my-model-quality
+    name: My Model (Quality)
+    description: High-quality processing model
+    capabilities: [text-to-text]
+    inputTypes: [text/plain]
+    outputTypes: [text/plain]
+    parameters:
+      maxTokens: 4000
+      temperature: 0.3
+
+# Build configuration
+main: dist/index.js
+exportName: MyProvider  # Export name if not default
+
+# Dependencies
+dependencies:
+  axios: ^1.6.0
+  lodash: ^4.17.21
 ```
 
 ### Step 3: Implement Provider Class
@@ -356,72 +770,31 @@ export class MyProvider implements MediaProvider {
 
   constructor(dockerService?: any) {
     this.dockerService = dockerService;
-    console.log(`🔧 ${this.name} initialized with service:`, dockerService?.constructor?.name);
   }
 
   async configure(config: ProviderConfig): Promise<void> {
-    // Implement configuration logic
-    console.log(`Configured ${this.name} with:`, config);
+    const port = this.dockerService?.getServiceInfo?.()?.ports?.[0] || 8080;
+    this.apiClient = new YourAPIClient(`http://localhost:${port}`);
   }
 
   async isAvailable(): Promise<boolean> {
-    try {
-      if (this.dockerService) {
-        const status = await this.dockerService.getServiceStatus();
-        return status.running && status.health === 'healthy';
-      }
-      return true; // For providers without services
-    } catch (error) {
-      console.error(`Error checking ${this.name} availability:`, error);
-      return false;
-    }
+    return this.apiClient?.testConnection() ?? false;
   }
 
   getModelsForCapability(capability: MediaCapability): ProviderModel[] {
-    return this.models.filter(model => model.capabilities.includes(capability));
+    return [{ id: 'your-model', name: 'Your Model', capabilities: [capability] }];
   }
 
   async getModel(modelId: string): Promise<any> {
-    const modelConfig = this.models.find(m => m.id === modelId);
-    if (!modelConfig) {
-      throw new Error(`Model ${modelId} not found in ${this.name}`);
-    }
-
-    // Import and instantiate model dynamically
-    const { MyModel } = await import('./MyModel');
-    return new MyModel(this.dockerService, modelConfig);
+    return new YourTextToTextModel(this.apiClient!, modelId);
   }
 
-  async getHealth(): Promise<{
-    status: 'healthy' | 'degraded' | 'unhealthy';
-    uptime: number;
-    activeJobs: number;
-    queuedJobs: number;
-    lastError?: string;
-  }> {
-    const isAvailable = await this.isAvailable();
-    return {
-      status: isAvailable ? 'healthy' : 'unhealthy',
-      uptime: Date.now(),
-      activeJobs: 0,
-      queuedJobs: 0,
-      lastError: isAvailable ? undefined : 'Service not available'
-    };
+  async getHealth() {
+    return { status: 'healthy' as const, uptime: 0, activeJobs: 0, queuedJobs: 0 };
   }
 
-  // Docker service management (if applicable)
-  async startService(): Promise<boolean> {
-    if (this.dockerService && this.dockerService.startService) {
-      return await this.dockerService.startService();
-    }
-    return false;
-  }
-
-  async stopService(): Promise<boolean> {
-    if (this.dockerService && this.dockerService.stopService) {
-      return await this.dockerService.stopService();
-    }
-    return false;
+  get models(): ProviderModel[] {
+    return this.getModelsForCapability(MediaCapability.TEXT_TO_TEXT);
   }
 }
 ```
@@ -438,17 +811,26 @@ import {
 import { Text } from '@mediaconduit/mediaconduit/src/media/types/provider';
 
 export class MyModel extends TextToTextModel {
-  private dockerService?: any;
+  private apiClient!: CowsayAPIClient;
 
-  constructor(dockerService: any, config: ModelConfig) {
-    super(config);
-    this.dockerService = dockerService;
+  constructor(dockerService: any) {
+    super(/* config */);
+    
+    // Get dynamic port from service
+    const serviceInfo = dockerService.getServiceInfo();
+    const port = serviceInfo.ports[0];
+    
+    this.apiClient = new CowsayAPIClient({
+      baseUrl: `http://localhost:${port}`
+    });
+    
+    console.log(`🔗 Cowsay model configured with dynamic port: ${port}`);
   }
 
   async isAvailable(): Promise<boolean> {
-    if (this.dockerService) {
+    if (this.apiClient) {
       try {
-        const status = await this.dockerService.getServiceStatus();
+        const status = await this.apiClient.testConnection();
         return status.running && status.health === 'healthy';
       } catch (error) {
         return false;
@@ -460,9 +842,9 @@ export class MyModel extends TextToTextModel {
   async transform(input: Text | Text[], options?: TextToTextOptions): Promise<Text> {
     const inputText = Array.isArray(input) ? input[0] : input;
     
-    if (this.dockerService) {
+    if (this.apiClient) {
       // Use Docker service for processing
-      const response = await this.dockerService.post('/transform', {
+      const response = await this.apiClient.post('/transform', {
         text: inputText.content,
         options
       });
@@ -639,7 +1021,7 @@ version: 1.0.0
 author: Your Name <email@example.com>
 
 # Provider type and capabilities
-type: local  # 'local' or 'remote'
+type: local
 capabilities:
   - text-to-text
   - text-to-image
@@ -651,8 +1033,6 @@ serviceConfig:
   serviceName: my-service
   healthEndpoint: /health
   defaultBaseUrl: http://localhost:8080
-  environment:
-    NODE_ENV: production
 
 # Model definitions
 models:
@@ -994,6 +1374,12 @@ app = Flask(__name__)
 def health():
     return {'status': 'healthy', 'port': os.environ.get('PORT', 80)}
 
+# Main processing endpoint
+@app.route('/transform', methods=['POST'])
+def transform_text():
+    # Your processing logic here
+    pass
+
 if __name__ == '__main__':
     # Internal port stays fixed (from environment or default)
     internal_port = int(os.environ.get('PORT', 80))
@@ -1042,7 +1428,7 @@ Use dynamic port from service info:
 this.apiClient = new APIClient('http://localhost:8080');
 
 // After
-const serviceInfo = this.dockerServiceManager.getServiceInfo();
+const serviceInfo = dockerServiceManager.getServiceInfo();
 const port = serviceInfo.ports[0];
 this.apiClient = new APIClient(`http://localhost:${port}`);
 ```
@@ -1055,10 +1441,10 @@ Multiple services can run simultaneously without manual coordination:
 ```bash
 # Multiple services running on different dynamic ports
 $ docker ps
-CONTAINER ID   PORTS                     NAMES
-abc123def456   127.0.0.1:54321->80/tcp   cowsay-service
-def456ghi789   127.0.0.1:54322->8080/tcp zonos-service
-ghi789jkl012   127.0.0.1:54323->3000/tcp custom-service
+CONTAINER ID   PORTS
+abc123def456   127.0.0.1:54321->80/tcp
+def456ghi789   127.0.0.1:54322->8080/tcp
+ghi789jkl012   127.0.0.1:54323->3000/tcp
 ```
 
 #### ✅ **Automatic Port Management**
@@ -1091,6 +1477,7 @@ async function testDynamicPorts() {
     const provider = await registry.getProvider(
       'https://github.com/MediaConduit/cowsay-provider'
     );
+    console.log(`✅ Provider loaded: ${provider.name}`);
     
     // Get service info to see assigned port
     const serviceRegistry = getServiceRegistry();
@@ -1215,8 +1602,9 @@ def transform_text():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+    # Internal port stays fixed (from environment or default)
+    internal_port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=internal_port)
 ```
 
 ```dockerfile
@@ -1343,7 +1731,7 @@ async function testDynamicLoading() {
     const registry = ProviderRegistry.getInstance();
     
     // Test GitHub loading
-    const provider = await registry.getProvider('https://github.com/MediaConduit/my-provider');
+    const provider = await registry.getProvider('https://github.com/MediaConduit/cowsay-provider');
     console.log(`✅ Provider loaded: ${provider.name}`);
     
     // Test service startup
@@ -1609,7 +1997,7 @@ async isAvailable(): Promise<boolean> {
       const status = await this.dockerService.getServiceStatus();
       return status.running && status.health === 'healthy';
     }
-    return true;
+    return true; // For providers without services
   } catch (error) {
     console.error(`Error checking ${this.name} availability:`, error);
     return false;
@@ -1818,6 +2206,71 @@ Default model for general-purpose processing.
 
 ## Troubleshooting
 
+### 🚨 First-Time Setup Checklist
+
+**Before diving into specific issues, run through this checklist:**
+
+1. **✅ Verdaccio Running**
+   ```bash
+   curl http://localhost:4873  # Should return HTML page
+   ```
+
+2. **✅ Docker Available**
+   ```bash
+   docker ps  # Should list containers without error
+   ```
+
+3. **✅ Test Simple Dynamic Load**
+   ```typescript
+   // test-simple.ts
+   import { getProviderRegistry } from './src/media/registry/ProviderRegistry';
+   
+   async function testSimple() {
+     const registry = getProviderRegistry();
+     const provider = await registry.getProvider('https://github.com/MediaConduit/ollama-provider');
+     console.log('Provider loaded:', provider.name);
+   }
+   
+   testSimple().catch(console.error);
+   ```
+
+4. **✅ Verify MediaConduit Types Available**
+   ```bash
+   npm list @mediaconduit/mediaconduit  # Should show version
+   ```
+
+### 🔍 "It's Not Working" Quick Diagnosis
+
+| Symptom | Most Likely Cause | Quick Fix |
+|---------|------------------|-----------|
+| `Cannot find module '@mediaconduit/mediaconduit'` | Verdaccio not running | `docker run -d -p 4873:4873 verdaccio/verdaccio` |
+| `model.getId() is not a function` | Using wrong API | Use `model.getId()` not `model.id` |
+| `generateText is not a function` | Wrong method name | Use `model.transform()` not `generateText()` |
+| `response.data is not JSON` | Streaming API | Parse NDJSON: `response.data.split('\n')` |
+| `Model ID: undefined` | Missing getId() | Use `model.getId()` method |
+| `Port 8080 already in use` | Hardcoded ports | Use dynamic ports from service |
+| Docker service won't start | Port conflicts | Check `docker ps` for conflicts |
+
+### 💡 "I Don't Understand" Quick Guide
+
+**Q: What's the difference between Provider and Service?**
+- **Provider** = Your code that implements MediaProvider interface
+- **Service** = Optional Docker container that your provider talks to
+
+**Q: Do I need a Docker service?**
+- **No** if your provider calls external APIs (OpenAI, Anthropic, etc.)
+- **Yes** if you need local processing (FFMPEG, Whisper, local AI)
+
+**Q: How do I know if my streaming API needs special handling?**
+- If responses come in multiple chunks (like Ollama model pulling)
+- If you see newline-separated JSON responses
+- Use `responseType: 'text'` and parse lines manually
+
+**Q: What's NDJSON and why do I care?**
+- **NDJSON** = Newline-Delimited JSON (each line is separate JSON)
+- **Ollama uses this** for streaming progress updates
+- **Parse with**: `response.data.split('\n').map(line => JSON.parse(line))`
+
 ### Common Issues and Solutions
 
 #### 1. **Provider Loading Failures**
@@ -1879,7 +2332,7 @@ serviceConfig:
 # Ensure health endpoint is accessible
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy'})
+    return {'status': 'healthy'}, 200
 
 # Check port mapping in docker-compose.yml
 services:
@@ -2111,6 +2564,7 @@ cowsay-provider/
 │   └── types.ts                    # Type definitions
 ├── MediaConduit.provider.yml       # Provider metadata
 ├── package.json                    # Dependencies
+├── tsconfig.json                   # TypeScript configuration
 └── README.md                       # Documentation
 ```
 
@@ -2308,6 +2762,7 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:80/health || exit 1
 
+# Run application
 CMD ["python", "app.py"]
 ```
 
@@ -2392,6 +2847,7 @@ async function testCowsayProvider() {
   console.log(`🔍 Model available: ${available}`);
   
   if (available) {
+    // Test processing
     const result = await model.generate('Hello from dynamic provider!');
     console.log('📤 Generated cowsay:');
     console.log(result.content);
@@ -2428,150 +2884,88 @@ The migration achieved all desired goals:
 📋 Reading provider configuration from MediaConduit.provider.yml
 ✅ Loaded provider config: Cowsay Docker Provider (cowsay-docker-provider)
 🔧 Loading Docker service from ServiceRegistry: https://github.com/MediaConduit/cowsay-service
-🔧 ServiceRegistry obtained: ServiceRegistry
-🔄 Loading service: https://github.com/MediaConduit/cowsay-service
-📥 Cloning service repository: MediaConduit/cowsay-service@main
-📋 Reading service configuration from MediaConduit.service.yml
-✅ Loaded service config: Cowsay Service v1.0.0
-✅ Service ready: Cowsay Service
-🔧 Docker service obtained: ConfigurableDockerService
-✅ Provider ready: Cowsay Docker Provider
-✅ GitHub provider loaded: Cowsay Docker Provider (cowsay-docker-provider)
-🐳 Starting cowsay Docker service...
-🐳 Starting cowsay service with docker-compose...
-✅ cowsay service started and is healthy
-🤖 GitHub models: cowsay-default
-🎯 GitHub model created: Cowsay Default
-🔍 GitHub model available: true
-📤 GitHub provider result:
- _____________________________________
-< Hello from GitHub dynamic provider! >
- -------------------------------------
-        \   ^__^
-         \  (oo)\_______
-            (__)\       )\/\
-                ||----w |
-                ||     ||
-✅ GitHub provider test completed successfully!
+🔄 Service Cowsay Service is already running
+✅ Service start result: true
+🔗 Cowsay configured with dynamic port: 54325
+🔄 Refreshed Ollama models cache: 3 models found
+🎯 Models discovered: 3 models (llama2, codellama, mistral)
+🔍 Testing model: llama2
+🔍 Model available: true
+📤 Generated response:
+Hello! I'm doing well, thank you for asking. I'm here and ready to help you with any questions or tasks you might have. How are you doing today?
+✅ Ollama provider test completed successfully!
 ```
 
-### Migration Results
+### Key Improvements Over Static Implementation
 
-#### Before vs After Comparison
+#### 1. **Enhanced Dynamic Port Assignment**
+- Service automatically gets available port from OS
+- Provider configures with detected port at runtime
+- No port conflicts with multiple services
 
-**Before Migration:**
-```bash
-# Only one service could run at a time
-$ docker ps
-CONTAINER ID   PORTS                NAMES
-abc123def456   0.0.0.0:80->80/tcp   cowsay-service
-# ❌ Port 80 conflict - can't start other services
-```
+#### 2. **Advanced Model Management**
+- Dynamic model discovery from Ollama API
+- Automatic model pulling for unavailable models
+- Model caching with TTL for performance
 
-**After Migration:**
-```bash
-# Multiple services running simultaneously
-$ docker ps
-CONTAINER ID   PORTS                     NAMES
-abc123def456   127.0.0.1:54321->80/tcp   cowsay-service
-def456ghi789   127.0.0.1:54322->8080/tcp huggingface-service
-ghi789jkl012   127.0.0.1:54323->3000/tcp custom-service
-# ✅ All services running on different dynamic ports
-```
+#### 3. **Robust Service Integration**
+- Clean separation between provider and service
+- ServiceRegistry handles all Docker orchestration
+- Enhanced health monitoring and error handling
 
-#### Performance Improvements
+#### 4. **Independent Development**
+- Provider can be updated without touching main application
+- Service already exists and is reusable
+- Clear separation of concerns
 
-1. **Startup Time**: 60% faster provider loading (no rebuild needed)
-2. **Memory Usage**: 40% reduction (isolated dependencies)  
-3. **Development Speed**: 80% faster iteration (independent development)
-4. **Port Conflicts**: 100% eliminated (dynamic assignment)
-
-#### Achieved Benefits
-
-✅ **Dynamic Provider Loading**
-```typescript
-// Load cowsay provider dynamically at runtime
-const provider = await registry.getProvider(
-  'https://github.com/MediaConduit/cowsay-provider'
-);
-```
-
-✅ **Automatic Port Management**
-```bash
-# Service gets random available port automatically
-🔧 ServiceRegistry assigning dynamic port: 54321
-🔗 Cowsay configured with dynamic port: 54321
-```
-
-✅ **Independent Development**
-```bash
-# Provider can be updated independently
-cd cowsay-provider
-git commit -m "Fix text encoding issue"
-git push origin main
-# No main application rebuild needed!
-```
-
-✅ **Isolation & Reliability**
-- Provider crashes don't affect main application
-- Provider dependencies don't conflict with core system
-- Easy rollback if provider issues occur
-
-### Lessons Learned
-
-#### 1. **Dynamic Port Assignment is Critical**
-The biggest pain point was hardcoded ports. Dynamic port assignment solved:
-- Development environment conflicts
-- Production deployment issues  
-- Multi-service testing scenarios
-- Container orchestration problems
-
-#### 2. **Service Discovery Pattern**
-Implementing proper service discovery through ServiceRegistry:
-- Providers get service info dynamically
-- Ports are detected from running containers
-- System handles both new and existing services
-
-#### 3. **Cache Management Importance**
-Proper cache invalidation ensures:
-- Fresh provider code after updates
-- Correct port information after restarts
-- Clean state after service changes
-
-#### 4. **Error Handling & Fallbacks**
-Robust error handling for:
-- Service startup failures
-- Port detection errors
-- Provider loading issues
-- Network connectivity problems
-
-### Best Practices Discovered
-
-1. **Always Use Dynamic Ports**
-```yaml
-# ✅ Correct pattern
-ports:
-  - "${SERVICE_HOST_PORT:-0}:8080"
-```
-
-2. **Implement Port Detection**
-```typescript
-// ✅ Detect actual running ports
-const runningPorts = await service.detectRunningPorts();
-```
-
-3. **Cache Service Info Properly**
-```typescript
-// ✅ Update service info when ports change
-this.serviceInfo.ports = await this.detectRunningPorts();
-```
-
-4. **Provide Clear Error Messages**
-```typescript
-// ✅ Helpful error messages
-throw new Error(`Service not available on port ${port}. Check if service is running with: docker ps`);
-```
-
-The cowsay provider migration demonstrates how dynamic loading with proper port management creates a scalable, maintainable provider ecosystem. 🎉
+The Ollama provider migration demonstrates how dynamic loading enables sophisticated local AI providers with advanced features like model management while maintaining clean architecture and independent deployment! 🚀
 
 ---
+
+## 🎓 Summary: What You Should Remember
+
+### If You Only Remember 5 Things:
+
+1. **✅ Use `model.transform()` and `model.getId()`** - Not `generateText()` or `model.id`
+
+2. **✅ Always include `createGenerationPrompt()`** - For complete audit trails
+
+3. **✅ Parse streaming APIs properly** - Use `responseType: 'text'` and split by newlines
+
+4. **✅ Let dynamic ports work** - Don't hardcode ports, get them from service info
+
+5. **✅ Test with existing providers first** - Ollama provider is perfect for learning
+
+### The "Just Give Me Working Code" Hierarchy:
+
+1. **New to this?** → Test existing provider first (Quick Start section)
+2. **Need simple provider?** → Use TL;DR copy-paste templates  
+3. **Need Docker service?** → Follow the Cowsay case study
+4. **Having issues?** → Check troubleshooting checklist
+5. **Complex streaming APIs?** → Study Ollama implementation
+
+### What Makes This System Powerful:
+
+- **No Port Management** - System handles everything automatically
+- **Zero Conflicts** - Run hundreds of services simultaneously  
+- **Rich Audit Trails** - Every transformation preserves complete history
+- **True Modularity** - Providers are completely independent
+- **Production Ready** - Dynamic loading works at scale
+
+### Before You Start Your Own Provider:
+
+```bash
+# 1. Test that dynamic loading works
+tsx test-ollama-small-model.ts
+
+# 2. Copy the TL;DR templates
+# 3. Replace "Your" with your actual provider name
+# 4. Implement your specific API calls
+# 5. Test thoroughly
+
+# That's it! 🎉
+```
+
+---
+
+*Happy provider building! 🚀*

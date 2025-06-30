@@ -24,11 +24,9 @@ export abstract class AbstractDockerProvider implements MediaProvider {
 
   constructor() {
     // Auto-configure from environment variables (async but non-blocking)
-    setTimeout(() => {
-      this.autoConfigureFromEnv().catch(error => {
-        // Silent fail - provider will just not be available until manually configured
-      });
-    }, 100);
+    this.autoConfigureFromEnv().catch(error => {
+      // Silent fail - provider will just not be available until manually configured
+    });
   }
 
   /**

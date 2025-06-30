@@ -302,8 +302,6 @@ export class ServiceRegistry {
       }
     }
   }
-
-  // ...existing code...
 }
 
 /**
@@ -401,12 +399,41 @@ class ConfigurableDockerService implements DockerService {
     return `http://localhost:${port}/health`;
   }
 
+  /**
+   * Detect and update ports for already running services
+   */
+  private async detectRunningPorts(): Promise<void> {
+    try {
+      const runningPorts = await this.dockerComposeService.getRunningContainerPorts();
+      
+      if (runningPorts.length > 0) {
+        console.log(`🔍 Detected running container ports: ${runningPorts.join(', ')}`);
+        this.assignedPorts = runningPorts;
+        
+        // Update environment variable with detected port
+        if (runningPorts.length > 0) {
+          const serviceNameUpper = this.serviceConfig.docker.serviceName.toUpperCase();
+          process.env[`${serviceNameUpper}_HOST_PORT`] = runningPorts[0].toString();
+          console.log(`🌍 Updated environment variable ${serviceNameUpper}_HOST_PORT=${runningPorts[0]} (detected)`);
+        }
+      } else {
+        console.warn(`⚠️ Could not detect running ports for ${this.serviceConfig.name}, using configured ports`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to detect running ports for ${this.serviceConfig.name}:`, error);
+    }
+  }
+
   async startService(): Promise<boolean> {
     // Check if service is already running
     try {
       const status = await this.getServiceStatus();
       if (status.running) {
         console.log(`🔄 Service ${this.serviceConfig.name} is already running`);
+        
+        // Detect actual running ports and update our assigned ports
+        await this.detectRunningPorts();
+        
         return true;
       }
     } catch (error) {

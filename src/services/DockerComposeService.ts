@@ -345,4 +345,82 @@ export class DockerComposeService {
     
     return await execAsync(command, options);
   }
+
+  /**
+   * Get actual ports being used by running container
+   */
+  async getRunningContainerPorts(): Promise<number[]> {
+    try {
+      // Get detailed container information including port mappings
+      const composeCmd = this.buildComposeCommand('ps', '--format', 'json');
+      const { stdout } = await this.executeCommand(composeCmd);
+
+      if (!stdout.trim()) {
+        return [];
+      }
+
+      const services = JSON.parse(stdout);
+      const serviceArray = Array.isArray(services) ? services : [services];
+
+      // Find our specific container
+      const targetService = serviceArray.find(service =>
+        service.Name === this.config.containerName ||
+        service.Service === this.config.serviceName
+      );
+
+      if (!targetService || !targetService.Publishers) {
+        // Fallback: try to get port info directly from Docker
+        return await this.getDockerContainerPorts();
+      }
+
+      // Extract host ports from Publishers array
+      const ports: number[] = [];
+      for (const publisher of targetService.Publishers) {
+        if (publisher.PublishedPort) {
+          ports.push(publisher.PublishedPort);
+        }
+      }
+
+      return ports;
+    } catch (error) {
+      console.warn(`Failed to get running container ports for ${this.config.serviceName}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Fallback method to get container ports directly from Docker
+   */
+  private async getDockerContainerPorts(): Promise<number[]> {
+    try {
+      // Get container port mappings using docker inspect
+      const containerName = this.config.containerName;
+      const { stdout } = await this.executeCommand(
+        `docker inspect ${containerName} --format '{{json .NetworkSettings.Ports}}'`
+      );
+
+      if (!stdout.trim()) {
+        return [];
+      }
+
+      const portsConfig = JSON.parse(stdout);
+      const ports: number[] = [];
+
+      // Parse Docker port mapping format
+      for (const [containerPort, hostBindings] of Object.entries(portsConfig)) {
+        if (hostBindings && Array.isArray(hostBindings)) {
+          for (const binding of hostBindings as any[]) {
+            if (binding.HostPort) {
+              ports.push(parseInt(binding.HostPort, 10));
+            }
+          }
+        }
+      }
+
+      return ports;
+    } catch (error) {
+      console.warn(`Failed to get Docker container ports for ${this.config.containerName}:`, error);
+      return [];
+    }
+  }
 }
