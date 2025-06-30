@@ -1,0 +1,88 @@
+# Build artifacts
+.next/
+dist/
+build/
+out/
+node_modules/
+
+# Cache files
+cache/
+*.tsbuildinfo
+.next/cache/
+
+# Temporary files
+temp/
+temp_*
+*.tmp
+
+# Test files
+tests/
+test-*
+*test*.ts
+*test*.js
+*.test.*
+
+# Media files
+*.mp4
+*.wav
+*.mp3
+*.png
+*.jpg
+*.gif
+
+# Config files
+.env*
+.cursor/
+.roo/
+.windsurf/
+.clinerules/
+.taskmaster/
+.trae/
+.github/
+.vscode/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Batch files
+*.bat
+
+# HTML files
+*.html
+
+# Development scripts
+scripts/
+debug-*
+validate-*
+check-*
+fix-*
+generate-*
+quick-*
+rebuild-*
+restart-*
+start-*
+
+# Log files
+*.log
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Exclude cowsay provider repo
+cowsay-provider-repo/*

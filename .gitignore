@@ -91,6 +91,7 @@ models/
 *token*
 !**/types/*key*  # Allow TypeScript key type definitions
 
+cowsay-provider-repo/*
 # Task files
 # tasks.json
 # tasks/ 

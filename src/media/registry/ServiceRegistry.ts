@@ -224,7 +224,7 @@ export class ServiceRegistry {
       
       // Parse YAML configuration
       const yaml = await import('yaml');
-      const serviceConfig: MediaConduitServiceConfig = yaml.default.parse(configContent);
+      const serviceConfig: MediaConduitServiceConfig = yaml.parse(configContent);
       console.log('DEBUG: Parsed serviceConfig (before ConfigurableDockerService):', serviceConfig);
       console.log(`✅ Loaded service config: ${serviceConfig.name} v${serviceConfig.version}`);
 

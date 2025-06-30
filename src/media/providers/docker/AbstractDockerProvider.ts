@@ -5,7 +5,7 @@
  * Eliminates code duplication by providing common service management functionality.
  */
 
-import { DockerComposeService } from '@/services/DockerComposeService';
+import { DockerComposeService } from '../../../services/DockerComposeService';
 import { MediaProvider, ProviderConfig, ProviderModel, ProviderType } from '../../types/provider';
 import { MediaCapability } from '../../types/provider';
 

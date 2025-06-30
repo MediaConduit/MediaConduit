@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  verdaccio:
+    image: verdaccio/verdaccio:latest
+    container_name: mediaconduit-registry
+    ports:
+      - "4873:4873"
+    volumes:
+      - verdaccio-storage:/verdaccio/storage
+      - verdaccio-conf:/verdaccio/conf
+    environment:
+      - VERDACCIO_USER_NAME=admin
+      - VERDACCIO_USER_PWD=admin
+    restart: unless-stopped
+
+volumes:
+  verdaccio-storage:
+  verdaccio-conf:

@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { MediaConduitServiceConfig } from '../registry/ServiceRegistry';
 
 /**
  * Media transformation capabilities that providers can support.
@@ -87,6 +88,32 @@ export interface ProviderConfig {
 }
 
 /**
+ * Configuration for MediaConduit provider metadata (from MediaConduit.provider.yml)
+ */
+export interface MediaConduitProviderConfig {
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+  author?: string;
+  type: ProviderType;
+  capabilities: MediaCapability[];
+  serviceUrl?: string;
+  serviceConfig?: any;
+  models?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    capabilities: MediaCapability[];
+    inputTypes?: string[];
+    outputTypes?: string[];
+  }>;
+  dependencies?: Record<string, string>;
+  main?: string;
+  exportName?: string;
+}
+
+/**
  * Base provider interface that all providers must implement
  */
 export interface MediaProvider {
@@ -140,6 +167,9 @@ export interface MediaProvider {
   }>;
 }
 
+/**
+ * Provider registry for managing all available providers
+ */
 /**
  * Provider registry for managing all available providers
  */

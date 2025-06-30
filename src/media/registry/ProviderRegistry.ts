@@ -5,8 +5,14 @@
  * for lazy instantiation and auto-configuration of providers.
  */
 
-import { MediaProvider, MediaCapability } from '../types/provider';
+import { MediaProvider, MediaCapability, ProviderType, MediaConduitProviderConfig } from '../types/provider';
 import { DockerMediaProvider } from '../providers/docker/DockerMediaProvider';
+import { getServiceRegistry, MediaConduitServiceConfig, DockerService } from '../registry/ServiceRegistry';
+import * as yaml from 'yaml';
+import { URL } from 'url';
+import * as path from 'path';
+import * as fs from 'fs/promises';
+import { execSync } from 'child_process';
 
 /**
  * Provider constructor type
@@ -279,144 +285,178 @@ export class ProviderRegistry {
 
     console.log(`📥 Downloading GitHub provider: ${owner}/${repo}@${ref}`);
 
-    try {
-      const crypto = await import('crypto');
-      const path = await import('path');
-      const fs = await import('fs/promises');
-      const { execSync } = await import('child_process');
-      const { DockerComposeService } = await import('../../services/DockerComposeService');
+    const serviceDirName = `${owner}-${repo}`;
+    const tmpDir = path.join(process.cwd(), 'temp', 'providers', serviceDirName);
+    const providerConfigPath = path.join(tmpDir, 'MediaConduit.provider.yml');
 
-      const tmpDir = path.join(process.cwd(), 'temp', 'providers', crypto.randomBytes(8).toString('hex'));
+    try {
+      // Clean up any existing directory first with better error handling
+      try {
+        const stats = await fs.stat(tmpDir);
+        if (stats.isDirectory()) {
+          console.log(`🧹 Cleaning existing provider directory: ${tmpDir}`);
+          await fs.rm(tmpDir, { recursive: true, force: true });
+          console.log(`✅ Cleanup completed`);
+        }
+      } catch (cleanupError: any) {
+        if (cleanupError.code !== 'ENOENT') {
+          console.warn(`⚠️ Directory cleanup warning: ${cleanupError.message}`);
+          // On Windows, sometimes files are locked. Try alternative cleanup.
+          try {
+            execSync(`rmdir /s /q "${tmpDir}"`, { stdio: 'pipe' });
+            console.log(`✅ Cleanup completed using Windows rmdir`);
+          } catch (rmError) {
+            console.warn(`⚠️ Windows rmdir also failed, proceeding anyway: ${rmError}`);
+          }
+        }
+      }
+      
       await fs.mkdir(tmpDir, { recursive: true });
 
-      try {
-        await fs.rm(tmpDir, { recursive: true, force: true });
-        await fs.mkdir(tmpDir, { recursive: true });
-      } catch (cleanupError) {
-        // Ignore cleanup errors
-      }
-
-      console.log(`🌀 Cloning repository: ${owner}/${repo}@${ref}`);
+      // Clone the repository
       const repoUrl = `https://github.com/${owner}/${repo}.git`;
       const cloneCommand = `git clone --depth 1 --branch ${ref} "${repoUrl}" "${tmpDir}"`;
       
       try {
-        execSync(cloneCommand, { 
-          stdio: 'pipe',
-          timeout: 180000 
-        });
-      } catch (gitError) {
+        execSync(cloneCommand, { stdio: 'pipe', timeout: 180000 });
+      } catch (gitError: any) {
+        console.error(`Git clone failed with branch ${ref}: ${gitError.stderr.toString()}`);
+        // Fallback: try without branch specification
         const fallbackCommand = `git clone --depth 1 "${repoUrl}" "${tmpDir}"`;
-        execSync(fallbackCommand, { 
-          stdio: 'pipe',
-          timeout: 180000 
-        });
-      }
-
-      const composeFilePath = path.join(tmpDir, 'docker-compose.yml');
-      const serviceConfigPath = path.join(tmpDir, 'MediaConduit.service.json');
-
-      try {
-        await fs.access(composeFilePath);
-      } catch {
-        throw new Error(`GitHub provider ${owner}/${repo} does not contain a docker-compose.yml`);
-      }
-
-      let serviceMetadata: any = {};
-      try {
-        const metadataContent = await fs.readFile(serviceConfigPath, 'utf-8');
-        serviceMetadata = JSON.parse(metadataContent);
-        console.log(`📋 Loaded MediaConduit service config: ${JSON.stringify(serviceMetadata, null, 2)}`);
-      } catch (error) {
-        console.log(`ℹ️ No MediaConduit.service.json found for ${owner}/${repo}, using defaults. Error: ${error.message}`);
-      }
-
-      const dockerComposeService = new DockerComposeService({
-        serviceName: serviceMetadata.serviceName || parsed.repo,
-        composeFile: composeFilePath,
-        containerName: serviceMetadata.containerName || `${parsed.repo}-container`,
-        healthCheckUrl: serviceMetadata.healthCheckUrl,
-        workingDirectory: tmpDir,
-        defaultService: serviceMetadata.defaultService
-      });
-
-      const capabilities = serviceMetadata.capabilities || [];
-      const providerId = serviceMetadata.id || parsed.repo;
-      const providerName = serviceMetadata.name || `${parsed.repo} (Docker)`;
-
-      const adapter = new DockerMediaProvider(dockerComposeService, capabilities, providerId, providerName);
-
-      // Cleanup temp files after successful load
-      setTimeout(async () => {
         try {
-          await fs.rm(tmpDir, { recursive: true, force: true });
-          console.log(`🧹 Cleaned up temp files for ${owner}/${repo}`);
-        } catch (error) {
-          console.warn(`Warning: Failed to cleanup temp files: ${error.message}`);
+          execSync(fallbackCommand, { stdio: 'pipe', timeout: 180000 });
+        } catch (fallbackGitError: any) {
+          console.error(`Git clone fallback failed: ${fallbackGitError.stderr.toString()}`);
+          throw fallbackGitError; // Re-throw the error if both attempts fail
         }
-      }, 5000);
+      }
 
-      console.log(`✅ Successfully loaded GitHub provider: ${owner}/${repo}@${ref}`);
-      return adapter;
+      // Install dependencies
+      console.log(`📦 Installing provider dependencies...`);
+      try {
+        execSync('npm install', { cwd: tmpDir, stdio: 'pipe', timeout: 180000 });
+        console.log(`✅ Dependencies installed successfully`);
+      } catch (installError: any) {
+        console.warn(`⚠️ Failed to install dependencies: ${installError.message}`);
+        // Continue anyway - some providers might not need dependencies
+      }
+
+      // Read MediaConduit.provider.yml configuration
+      console.log(`📋 Reading provider configuration from MediaConduit.provider.yml`);
+      const configContent = await fs.readFile(providerConfigPath, 'utf-8');
+      
+      // Parse YAML configuration
+      const providerConfig: MediaConduitProviderConfig = yaml.parse(configContent);
+      console.log(`✅ Loaded provider config: ${providerConfig.name} (${providerConfig.id})`);
+      console.log(`🔍 Provider config type: ${providerConfig.type} (${typeof providerConfig.type})`);
+      console.log(`🔍 Provider config serviceUrl: ${providerConfig.serviceUrl} (${typeof providerConfig.serviceUrl})`);
+      console.log(`🔍 ProviderType.LOCAL: ${ProviderType.LOCAL} (${typeof ProviderType.LOCAL})`);
+      console.log(`🔍 Type match: ${providerConfig.type === ProviderType.LOCAL}`);
+      console.log(`🔍 ServiceUrl exists: ${!!providerConfig.serviceUrl}`);
+      console.log(`🔍 Condition result: ${providerConfig.type === ProviderType.LOCAL && providerConfig.serviceUrl}`);
+
+      let providerInstance: MediaProvider;
+
+      // Dynamically import the provider's main class
+      const providerModulePath = path.join(tmpDir, 'src', 'index.ts'); // Assuming main entry is src/index.ts
+      const providerModuleUrl = new URL(`file://${providerModulePath}`).href;
+      const providerModule = await import(providerModuleUrl);
+      const ProviderClass = providerModule.default || providerModule[providerConfig.id]; // Assuming default export or named export matching ID
+
+      if (!ProviderClass) {
+        throw new Error(`Could not find provider class for ID: ${providerConfig.id} in ${providerModulePath}`);
+      }
+
+      // Instantiate the provider based on its type and configuration
+      if (providerConfig.type === ProviderType.LOCAL && providerConfig.serviceUrl) {
+        // For Docker-based providers, get the service from ServiceRegistry
+        console.log(`🔧 Loading Docker service from ServiceRegistry: ${providerConfig.serviceUrl}`);
+        console.log(`🔧 Service config:`, providerConfig.serviceConfig);
+        
+        const serviceRegistry = getServiceRegistry();
+        console.log(`🔧 ServiceRegistry obtained:`, serviceRegistry.constructor.name);
+        
+        try {
+          const dockerService = await serviceRegistry.getService(providerConfig.serviceUrl, providerConfig.serviceConfig) as DockerService;
+          console.log(`🔧 Docker service obtained:`, dockerService?.constructor?.name || 'undefined');
+          providerInstance = new ProviderClass(dockerService);
+        } catch (error) {
+          console.error(`❌ Failed to get Docker service:`, error);
+          throw error;
+        }
+      } else {
+        // For other types of providers, instantiate directly (or with other configs)
+        console.log(`🔧 Instantiating provider directly (no Docker service needed)`);
+        providerInstance = new ProviderClass();
+      }
+      
+      // Cache the provider
+      this.providerCache.set(providerConfig.id, providerInstance);
+      
+      console.log(`✅ Provider ready: ${providerConfig.name}`);
+      return providerInstance;
 
     } catch (error) {
-      throw new Error(`Failed to load GitHub provider ${owner}/${repo}@${ref}: ${error.message}`);
+      // Cleanup on error
+      await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+      throw new Error(`Failed to load GitHub provider ${owner}/${repo}@${ref}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   /**
    * Load provider from local file
    */
   private async loadFileProvider(parsed: ParsedProviderIdentifier): Promise<MediaProvider> {
-    const { path } = parsed;
+    const { path: providerPath } = parsed;
     
-    if (!path) {
+    if (!providerPath) {
       throw new Error('File path is required for file provider');
     }
     
     try {
       const fs = await import('fs/promises');
-      const pathModule = await import('path');
-      const { DockerComposeService } = await import('../../services/DockerComposeService');
 
-      const serviceDirectory = pathModule.resolve(path);
-      const composeFilePath = pathModule.join(serviceDirectory, 'docker-compose.yml');
-      const serviceConfigPath = pathModule.join(serviceDirectory, 'MediaConduit.service.json');
+      const serviceDirectory = providerPath; // Use providerPath directly as it's already absolute
+      const providerConfigPath = path.join(serviceDirectory, 'MediaConduit.provider.yml');
 
-      try {
-        await fs.access(composeFilePath);
-      } catch {
-        throw new Error(`File provider at ${path} does not contain a docker-compose.yml`);
+      // Read MediaConduit.provider.yml configuration
+      console.log(`📋 Reading provider configuration from MediaConduit.provider.yml at ${providerConfigPath}`);
+      const configContent = await fs.readFile(providerConfigPath, 'utf-8');
+      
+      // Parse YAML configuration
+      const providerConfig: MediaConduitProviderConfig = yaml.parse(configContent);
+      console.log(`✅ Loaded provider config: ${providerConfig.name} (${providerConfig.id})`);
+
+      let providerInstance: MediaProvider;
+
+      // Dynamically import the provider's main class
+      const providerModulePath = path.join(serviceDirectory, 'src', 'index.ts'); // Assuming main entry is src/index.ts
+      const providerModuleUrl = new URL(`file://${providerModulePath}`).href;
+      const providerModule = await import(providerModuleUrl);
+      const ProviderClass = providerModule.default || providerModule[providerConfig.id]; // Assuming default export or named export matching ID
+
+      if (!ProviderClass) {
+        throw new Error(`Could not find provider class for ID: ${providerConfig.id} in ${providerModulePath}`);
       }
 
-      let serviceMetadata: any = {};
-      try {
-        const metadataContent = await fs.readFile(serviceConfigPath, 'utf-8');
-        serviceMetadata = JSON.parse(metadataContent);
-        console.log(`📋 Loaded MediaConduit service config: ${JSON.stringify(serviceMetadata, null, 2)}`);
-      } catch (error) {
-        console.log(`ℹ️ No MediaConduit.service.json found for file provider at ${path}, using defaults. Error: ${error.message}`);
+      // Instantiate the provider based on its type and configuration
+      if (providerConfig.type === ProviderType.LOCAL && providerConfig.serviceUrl) {
+        // For Docker-based providers, get the service from ServiceRegistry
+        const serviceRegistry = getServiceRegistry();
+        const dockerService = await serviceRegistry.getService(providerConfig.serviceUrl, providerConfig.serviceConfig) as DockerService;
+        providerInstance = new ProviderClass(dockerService); // Assuming constructor takes DockerService
+      } else {
+        // For other types of providers, instantiate directly (or with other configs)
+        providerInstance = new ProviderClass();
       }
-
-      const dockerComposeService = new DockerComposeService({
-        serviceName: serviceMetadata.serviceName || pathModule.basename(serviceDirectory),
-        composeFile: composeFilePath,
-        containerName: serviceMetadata.containerName || `${pathModule.basename(serviceDirectory)}-container`,
-        healthCheckUrl: serviceMetadata.healthCheckUrl,
-        workingDirectory: serviceDirectory,
-        defaultService: serviceMetadata.defaultService
-      });
-
-      const capabilities = serviceMetadata.capabilities || [];
-      const providerId = serviceMetadata.id || pathModule.basename(serviceDirectory);
-      const providerName = serviceMetadata.name || `${providerId} (Docker)`;
-
-      const adapter = new DockerMediaProvider(dockerComposeService, capabilities, providerId, providerName);
-
-      console.log(`✅ Successfully loaded file provider: ${path}`);
-      return adapter;
+      
+      // Cache the provider
+      this.providerCache.set(providerConfig.id, providerInstance);
+      
+      console.log(`✅ Provider ready: ${providerConfig.name}`);
+      return providerInstance;
 
     } catch (error) {
-      throw new Error(`Failed to load file provider ${path}: ${error.message}`);
+      throw new Error(`Failed to load file provider from ${providerPath}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -424,9 +464,29 @@ export class ProviderRegistry {
    * Validate that a loaded provider implements the MediaProvider interface
    */
   private async validateProvider(provider: any): Promise<void> {
-    const { DockerMediaProvider } = await import('../providers/docker/DockerMediaProvider');
-    if (!(provider instanceof DockerMediaProvider)) {
-      throw new Error('Loaded provider is not an instance of DockerMediaProvider');
+    // Check if provider implements the required MediaProvider interface methods
+    const requiredMethods = ['configure', 'isAvailable', 'getModelsForCapability', 'getModel', 'getHealth'];
+    const requiredProperties = ['id', 'name', 'type', 'capabilities', 'models'];
+    
+    // Check required properties
+    for (const prop of requiredProperties) {
+      if (!(prop in provider)) {
+        throw new Error(`Loaded provider is missing required property: ${prop}`);
+      }
+    }
+    
+    // Check required methods
+    for (const method of requiredMethods) {
+      if (typeof provider[method] !== 'function') {
+        throw new Error(`Loaded provider is missing required method: ${method}`);
+      }
+    }
+    
+    // For Docker providers, also check for Docker service management methods
+    if (provider.type === 'local' && typeof provider.startService === 'function') {
+      console.log(`✅ Docker provider validation passed for: ${provider.name}`);
+    } else {
+      console.log(`✅ Provider validation passed for: ${provider.name}`);
     }
   }
   /**
