@@ -126,7 +126,7 @@ POST /api/v1/transform/elevenlabs/voice-id
 
 - 🌐 **Dynamic Loading**: Load providers from GitHub/NPM at runtime with Go-like module system
 - 🤝 **Provider → Service**: Providers automatically load and manage their service dependencies
-- 🔌 **15+ AI Providers**: OpenRouter (Dynamic! 318 models), Together.ai (Dynamic!), FAL.ai, Replicate, HuggingFace, OpenAI + Local Docker Services
+- 🔌 **15+ AI Providers**: OpenRouter (318 models!), X.AI (Grok!), ElevenLabs (Voice!), Together.ai (70+ models), FAL.ai, Replicate + Local Docker Services
 - 🧠 **500+ AI Models**: Access any model through unified interfaces with dynamic discovery
 - 🎨 **Smart Asset System**: Load any format, get the right capabilities automatically
 - 🐳 **Docker Services**: Local FFMPEG, Chatterbox TTS, Whisper STT for privacy and control
