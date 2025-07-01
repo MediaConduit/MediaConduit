@@ -1,0 +1,57 @@
+{
+  "name": "@mediaconduit/replicate-provider",
+  "version": "1.0.0",
+  "description": "Multi-capability AI provider for Replicate models including text-to-image, text-to-video, text-to-audio, and image enhancement",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Run tests from main MediaConduit project\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "replicate",
+    "ai",
+    "text-to-image",
+    "text-to-video",
+    "text-to-audio",
+    "flux",
+    "sdxl",
+    "luma",
+    "stable-diffusion",
+    "open-source-models",
+    "multi-modal",
+    "mediaconduit",
+    "provider"
+  ],
+  "author": "MediaConduit Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MediaConduit/replicate-provider.git"
+  },
+  "homepage": "https://github.com/MediaConduit/replicate-provider",
+  "dependencies": {
+    "@mediaconduit/mediaconduit": "^0.1.8",
+    "replicate": "^0.31.0",
+    "node-fetch": "^3.3.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@mediaconduit/mediaconduit": "^0.1.8"
+  },
+  "files": [
+    "dist/**/*",
+    "MediaConduit.provider.yml",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

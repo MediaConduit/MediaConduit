@@ -49,6 +49,7 @@
         "test:elevenlabs": "tsx test-elevenlabs-dynamic-loading.ts",
         "test:xai": "tsx test-xai-dynamic-loading.ts",
         "test:anthropic": "tsx test-anthropic-dynamic-loading.ts",
+        "test:azure": "tsx test-azure-dynamic-loading.ts",
         "test:dynamic": "tsx test-together-dynamic-loading.ts",
         "verify-media": "node scripts/verify-media-database.js",
         "verify-media-ts": "ts-node scripts/verify-media-database.ts",

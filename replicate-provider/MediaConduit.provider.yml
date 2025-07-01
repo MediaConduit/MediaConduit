@@ -1,0 +1,101 @@
+name: Replicate Provider
+description: Multi-capability AI provider for Replicate models including text-to-image, text-to-video, text-to-audio, and image enhancement
+id: replicate-provider
+version: 1.0.0
+type: remote
+author: MediaConduit Team
+homepage: https://github.com/MediaConduit/replicate-provider
+repository: https://github.com/MediaConduit/replicate-provider.git
+
+capabilities:
+  - text-to-image
+  - text-to-video
+  - text-to-audio
+  - image-to-image
+  - image-to-video
+  - video-to-video
+
+models:
+  # Popular text-to-image models
+  - id: black-forest-labs/flux-schnell
+    name: FLUX.1 Schnell
+    description: Fast and high-quality text-to-image generation
+    capabilities: [text-to-image]
+    
+  - id: black-forest-labs/flux-dev
+    name: FLUX.1 Dev
+    description: FLUX.1 development model for text-to-image
+    capabilities: [text-to-image]
+    
+  - id: stability-ai/sdxl
+    name: Stable Diffusion XL
+    description: Stable Diffusion XL for high-quality images
+    capabilities: [text-to-image]
+    
+  - id: bytedance/sdxl-lightning-4step
+    name: SDXL Lightning
+    description: Ultra-fast SDXL in 4 steps
+    capabilities: [text-to-image]
+
+  # Text-to-video models
+  - id: lumalabs/dream-machine
+    name: Luma Dream Machine
+    description: High-quality text-to-video generation
+    capabilities: [text-to-video]
+    
+  - id: minimax/video-01
+    name: MiniMax Video-01
+    description: Advanced text-to-video model
+    capabilities: [text-to-video]
+
+  # Text-to-audio models
+  - id: meta/musicgen
+    name: MusicGen
+    description: Meta's music generation model
+    capabilities: [text-to-audio]
+    
+  - id: suno-ai/bark
+    name: Bark
+    description: Text-to-speech with voice cloning
+    capabilities: [text-to-audio]
+
+  # Image enhancement models
+  - id: nightmareai/real-esrgan
+    name: Real-ESRGAN
+    description: Image upscaling and enhancement
+    capabilities: [image-to-image]
+
+configuration:
+  environment:
+    REPLICATE_API_TOKEN:
+      description: Your Replicate API token
+      required: true
+      example: r8_***
+    REPLICATE_CACHE_DIR:
+      description: Directory for caching model metadata
+      required: false
+      default: ./cache
+
+features:
+  - Dynamic model discovery from Replicate API
+  - AI-powered model categorization
+  - Advanced parameter extraction from OpenAPI schemas
+  - Intelligent caching with 24-hour expiration
+  - Multi-modal capabilities (image, video, audio)
+  - Support for 1000+ open-source models
+  - Real-time model availability checking
+  - Cost-effective usage-based pricing
+
+specialties:
+  - Open-source model ecosystem
+  - Research and experimental models
+  - Custom model deployments
+  - Multi-modal AI capabilities
+  - Cost-effective AI inference
+  - Community-driven model sharing
+
+dependencies:
+  '@mediaconduit/mediaconduit': '^0.1.8'
+  replicate: '^0.31.0'
+  node-fetch: '^3.3.2'
+  uuid: '^9.0.1'

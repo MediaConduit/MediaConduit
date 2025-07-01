@@ -1786,14 +1786,16 @@ getProfessionalVoices(): ProviderModel[] { /* premium voices */ }
 ✅ OpenRouter Provider   (Level 2) - 318 models, universal fallback  
 ✅ ElevenLabs Provider   (Level 3) - Voice synthesis, cloning
 ✅ X.AI Provider         (Level 1) - 4 Grok models, conversational AI
+✅ Anthropic Provider    (Level 1) - 11 Claude models, reasoning
+✅ Azure OpenAI Provider (Level 1) - 15 GPT models, enterprise
 ✅ Whisper Provider      (Level 4) - Docker service, STT
 ✅ Ollama Provider       (Level 4) - Docker service, local LLMs
 
 🎯 Next Targets:
-⏳ Anthropic Provider    (Level 1) - Claude models
 ⏳ Replicate Provider    (Level 2) - Open-source models  
 ⏳ FalAI Provider        (Level 2) - Fast multi-modal
 ⏳ OpenAI Provider       (Level 1) - GPT models
+⏳ Hugging Face Provider (Level 2) - Open-source ecosystem
 ```
 
 ### **🚀 Advanced Migration Techniques**
