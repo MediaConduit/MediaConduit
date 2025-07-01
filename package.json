@@ -1,6 +1,6 @@
 {
     "name": "@mediaconduit/mediaconduit",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "description": "Media Transformation SDK - Unified access to 15+ AI providers through clean provider→model→transform architecture",
     "repository": {
         "type": "git",
