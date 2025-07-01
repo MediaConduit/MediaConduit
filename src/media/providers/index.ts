@@ -23,9 +23,6 @@ export * from './elevenlabs';
 // Replicate Provider Package
 export * from './replicate';
 
-// Together AI Provider Package
-export * from './together';
-
 // Google Gemini Provider Package
 export * from './google';
 
@@ -41,12 +38,7 @@ export * from './creatify';
 // Azure OpenAI Provider Package
 export * from './azure';
 
-// Docker Provider Packages
-export * from './docker/chatterbox';
-export * from './docker/whisper';
-export * from './docker/ffmpeg';
-export * from './docker/ollama';
-export * from './docker/zonos';
+
 
 // FFMPEG Provider Package
 export * from './ffmpeg';
