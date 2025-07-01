@@ -126,7 +126,7 @@ POST /api/v1/transform/elevenlabs/voice-id
 
 - 🌐 **Dynamic Loading**: Load providers from GitHub/NPM at runtime with Go-like module system
 - 🤝 **Provider → Service**: Providers automatically load and manage their service dependencies
-- 🔌 **15+ AI Providers**: Together.ai (Dynamic!), FAL.ai, Replicate, OpenRouter, HuggingFace, OpenAI + Local Docker Services
+- 🔌 **15+ AI Providers**: OpenRouter (Dynamic! 318 models), Together.ai (Dynamic!), FAL.ai, Replicate, HuggingFace, OpenAI + Local Docker Services
 - 🧠 **500+ AI Models**: Access any model through unified interfaces with dynamic discovery
 - 🎨 **Smart Asset System**: Load any format, get the right capabilities automatically
 - 🐳 **Docker Services**: Local FFMPEG, Chatterbox TTS, Whisper STT for privacy and control
@@ -141,21 +141,20 @@ POST /api/v1/transform/elevenlabs/voice-id
 ```typescript
 import { getProvider } from 'mediaconduit';
 
-// Load Together AI provider from GitHub (70+ models, multi-capability)
-const provider = await getProvider('https://github.com/MediaConduit/together-provider');
-await provider.configure({ apiKey: process.env.TOGETHER_API_KEY });
+// Load OpenRouter provider from GitHub (318 models from 20+ providers!)
+const provider = await getProvider('https://github.com/MediaConduit/openrouter-provider');
+// Already configured from OPENROUTER_API_KEY environment variable
 
-// Text generation with Llama
-const textModel = await provider.getModel('meta-llama/Llama-3.2-3B-Instruct-Turbo');
-const result = await textModel.transform('Write a haiku about AI');
+// Use any model from OpenAI, Anthropic, Google, Meta, Mistral, etc.
+const gpt4 = await provider.getModel('openai/gpt-4-turbo');
+const claude = await provider.getModel('anthropic/claude-3-opus');
+const llama = await provider.getModel('meta-llama/llama-3.1-70b-instruct');
 
-// Image generation with FLUX  
-const imageModel = await provider.getModel('black-forest-labs/FLUX.1-schnell');
-const image = await imageModel.transform('A serene mountain landscape');
+// Or use free models for development
+const freeModel = await provider.getModel('meta-llama/llama-3.1-8b-instruct:free');
+const result = await freeModel.transform('Write a haiku about AI');
 
-// Audio generation with Cartesia
-const audioModel = await provider.getModel('cartesia-ai/sonic-english');
-const audio = await audioModel.transform('Hello, this is a test');
+// 318 models, many free - perfect for any use case!
 ```
 
 ### 2. Core SDK Usage
