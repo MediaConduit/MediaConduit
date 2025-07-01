@@ -5,15 +5,15 @@
  * Implements TextToAudioModel interface and uses Replicate API.
  */
 
-import { ModelMetadata } from '../../models/abstracts/Model';
-import { TextToAudioModel, TextToAudioOptions } from '../../models/abstracts/TextToAudioModel';
+import { ModelMetadata } from '@mediaconduit/mediaconduit/src/media/models/abstracts/Model';
+import { TextToAudioModel, TextToAudioOptions } from '@mediaconduit/mediaconduit/src/media/models/abstracts/TextToAudioModel';
 import { ReplicateClient, ReplicateModelMetadata } from './ReplicateClient';
-import { Text, Audio, TextRole, AudioRole } from '../../assets/roles';
+import { Text, Audio, TextRole, AudioRole } from '@mediaconduit/mediaconduit/src/media/assets/roles';
 import Replicate from 'replicate';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { createGenerationPrompt, extractInputContent } from '../../utils/GenerationPromptHelper';
+import { createGenerationPrompt, extractInputContent } from '@mediaconduit/mediaconduit/src/media/utils/GenerationPromptHelper';
 
 export interface ReplicateModelConfig {
   client: ReplicateClient;
