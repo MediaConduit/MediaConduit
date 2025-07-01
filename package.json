@@ -44,6 +44,8 @@
         "test:coverage": "vitest run --coverage",
         "test:integration": "vitest run --config vitest.integration.config.ts",
         "test:cowsay": "tsx test-cowsay-docker-provider.ts",
+        "test:together": "tsx verify-together-migration.ts",
+        "test:dynamic": "tsx test-together-dynamic-loading.ts",
         "verify-media": "node scripts/verify-media-database.js",
         "verify-media-ts": "ts-node scripts/verify-media-database.ts",
         "register-png": "ts-node scripts/register-png-discovery.ts",

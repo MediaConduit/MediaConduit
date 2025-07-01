@@ -21,16 +21,19 @@ async function testExistingProvider() {
   
   const registry = getProviderRegistry();
   
-  // Load Ollama provider from GitHub - NO configuration needed!
-  const provider = await registry.getProvider('https://github.com/MediaConduit/ollama-provider');
+  // Load Together provider from GitHub - NO configuration needed!
+  const provider = await registry.getProvider('https://github.com/MediaConduit/together-provider');
   console.log('✅ Provider loaded:', provider.name);
   
-  // Provider is ready to use immediately - service initialized in constructor
-  const model = await provider.getModel('llama3.2:1b'); // Small 1.3GB model
+  // Configure with API key
+  await provider.configure({ apiKey: process.env.TOGETHER_API_KEY });
+  
+  // Get a fast model for testing
+  const model = await provider.getModel('meta-llama/Llama-3.2-3B-Instruct-Turbo');
   console.log('✅ Model ready:', model.getId());
   
   // Use the model - everything is automatically configured
-  const result = await model.transform("Write a haiku about coding");
+  const result = await model.transform("Write a haiku about AI");
   console.log('📝 Generated:', result.content);
   console.log('🔍 Metadata:', result.metadata?.generation_prompt);
 }
@@ -43,20 +46,13 @@ Run with: `tsx test-existing-provider.ts`
 #### 2. **What You Should See (Success Pattern)**
 ```
 🧪 Testing existing dynamic provider...
-📥 Downloading GitHub provider: MediaConduit/ollama-provider@main
-🔧 Loading Docker service from ServiceRegistry: https://github.com/MediaConduit/ollama-service
-� Service not running, will use dynamic ports for startup  ← Automatic!
-🚀 Starting service ollama-service...
-🔍 Service started, detecting actual assigned ports...
-🔍 Detected running container ports: 32770  ← Truly random!
-🔗 Ollama ready on dynamic port: 32770  ← Perfect!
-✅ Provider loaded: Ollama Docker Provider
-🔄 Pulling Ollama model: llama3.2:1b
-📥 llama3.2:1b: pulling manifest
-📥 llama3.2:1b: success
-✅ Model ready: llama3.2:1b
-📝 Generated: Code flows like streams / Bugs are rocks in the water / Debugging clears paths
-🔍 Metadata: { input: "Write a haiku about coding", options: {...}, modelId: "llama3.2:1b", ... }
+📥 Downloading GitHub provider: MediaConduit/together-provider@main
+✅ Provider loaded: Together AI Provider
+✅ Dynamic model discovery: 70+ models found
+✅ Multi-capability support: text-to-text, text-to-image, text-to-audio
+✅ Model ready: meta-llama/Llama-3.2-3B-Instruct-Turbo
+📝 Generated: Silicon minds think / In patterns beyond human scope / Code becomes conscious
+🔍 Metadata: { input: "Write a haiku about AI", modelId: "meta-llama/Llama-3.2-3B-Instruct-Turbo", provider: "together", ... }
 ```
 
 #### 3. **Common First-Time Issues & Quick Fixes**
@@ -103,6 +99,7 @@ Once the above test works, jump to these sections:
 11. [Troubleshooting](#troubleshooting)
 12. [Case Study: Cowsay Provider](#case-study-cowsay-provider)
 13. [Case Study: Ollama Provider](#case-study-ollama-provider)
+14. [Case Study: Together Provider](#case-study-together-provider)
 
 ---
 
@@ -1581,3 +1578,43 @@ The Whisper migration proved that the dynamic provider system **actually deliver
 **Status**: ✅ Production Ready (v1.1.0)
 
 ---
+
+## 🎯 **CASE STUDY: TOGETHER PROVIDER MIGRATION**
+
+The Together.ai provider migration serves as a **perfect example** of migrating a **remote API provider** to the dynamic system:
+
+### **🎯 The Challenge:**
+Migrate the Together.ai provider from static embedding to dynamic loading while:
+- Removing hardcoded model lists (proper design!)
+- Implementing dynamic model discovery
+- Supporting multiple capabilities (text, image, audio)
+- Maintaining full API compatibility
+
+### **✅ The Solution:**
+```typescript
+// OLD: Static provider with hardcoded models
+export class TogetherProvider implements MediaProvider {
+  readonly models = [
+    { id: 'meta-llama/Meta-Llama-3.1-8B', name: 'Llama 3.1' },
+    // ... 50+ hardcoded entries in YAML
+  ];
+}
+
+// NEW: Dynamic provider with runtime discovery
+export class TogetherProvider implements MediaProvider {
+  async getModelsForCapability(capability: MediaCapability): ProviderModel[] {
+    // Models discovered dynamically from Together.ai API
+    const models = await this.apiClient.getAvailableModels();
+    return this.categorizeModels(models, capability);
+  }
+}
+```
+
+### **📊 The Results:**
+- **✅ GitHub Repository**: https://github.com/MediaConduit/together-provider
+- **✅ Dynamic Loading**: `registry.getProvider('https://github.com/MediaConduit/together-provider')`
+- **✅ Multi-Capability**: Text (70+ models), Image (10+ models), Audio (5+ models)
+- **✅ Zero Maintenance**: No hardcoded model lists to maintain
+- **✅ Always Updated**: Latest models from Together.ai automatically available
+
+### **🔧 What Made It Work:**

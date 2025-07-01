@@ -126,7 +126,7 @@ POST /api/v1/transform/elevenlabs/voice-id
 
 - 🌐 **Dynamic Loading**: Load providers from GitHub/NPM at runtime with Go-like module system
 - 🤝 **Provider → Service**: Providers automatically load and manage their service dependencies
-- 🔌 **15+ AI Providers**: FAL.ai, Replicate, Together.ai, OpenRouter, HuggingFace, OpenAI + Local Docker Services
+- 🔌 **15+ AI Providers**: Together.ai (Dynamic!), FAL.ai, Replicate, OpenRouter, HuggingFace, OpenAI + Local Docker Services
 - 🧠 **500+ AI Models**: Access any model through unified interfaces with dynamic discovery
 - 🎨 **Smart Asset System**: Load any format, get the right capabilities automatically
 - 🐳 **Docker Services**: Local FFMPEG, Chatterbox TTS, Whisper STT for privacy and control
@@ -141,17 +141,21 @@ POST /api/v1/transform/elevenlabs/voice-id
 ```typescript
 import { getProvider } from 'mediaconduit';
 
-// Load provider from GitHub
-const provider = await getProvider('https://github.com/company/custom-provider');
+// Load Together AI provider from GitHub (70+ models, multi-capability)
+const provider = await getProvider('https://github.com/MediaConduit/together-provider');
+await provider.configure({ apiKey: process.env.TOGETHER_API_KEY });
 
-// Configure with dynamic service
-await provider.configure({
-  serviceUrl: 'github:company/specialized-service@v1.0.0',
-  serviceConfig: { enableGPU: true }
-});
+// Text generation with Llama
+const textModel = await provider.getModel('meta-llama/Llama-3.2-3B-Instruct-Turbo');
+const result = await textModel.transform('Write a haiku about AI');
 
-// Use like any other provider
-const result = await provider.getModel('custom-model').transform(input);
+// Image generation with FLUX  
+const imageModel = await provider.getModel('black-forest-labs/FLUX.1-schnell');
+const image = await imageModel.transform('A serene mountain landscape');
+
+// Audio generation with Cartesia
+const audioModel = await provider.getModel('cartesia-ai/sonic-english');
+const audio = await audioModel.transform('Hello, this is a test');
 ```
 
 ### 2. Core SDK Usage
