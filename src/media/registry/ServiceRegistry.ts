@@ -316,18 +316,19 @@ class ConfigurableDockerService implements DockerService {
   private serviceConfig: MediaConduitServiceConfig;
   private serviceDirectory: string;
   private assignedPorts: number[] = []; // Track dynamically assigned ports
+  private detectedPorts: number[] = []; // Track detected running ports
 
   constructor(serviceDirectory: string, serviceConfig: MediaConduitServiceConfig, userConfig?: any) {
     this.serviceDirectory = serviceDirectory;
     this.serviceConfig = serviceConfig;
     
-    // CRITICAL FIX: Ensure ports array exists to prevent undefined.map() error
+    // CRITICAL FIX: Handle services with or without predefined ports
     if (!this.serviceConfig.docker.ports || !Array.isArray(this.serviceConfig.docker.ports)) {
-      console.warn(`⚠️ No ports defined in service config, using default port 8080`);
-      this.serviceConfig.docker.ports = [8080]; // Default fallback
+      console.log(`🎯 Service configured for pure dynamic port assignment`);
+      this.serviceConfig.docker.ports = []; // Empty array for dynamic-only
     }
     
-    // Assign dynamic ports for any port specified as 0
+    // Assign dynamic ports (empty if no predefined ports)
     this.assignedPorts = this.assignDynamicPorts(this.serviceConfig.docker.ports);
     
     // Create DockerComposeService with the configuration
@@ -351,10 +352,10 @@ class ConfigurableDockerService implements DockerService {
   }
 
   private assignDynamicPorts(configuredPorts: number[]): number[] {
-    // Add safety check to prevent crashes
-    if (!configuredPorts || !Array.isArray(configuredPorts)) {
-      console.warn('Invalid ports configuration, using default [8080]');
-      configuredPorts = [8080];
+    // For services without predefined ports, use dynamic port assignment
+    if (!configuredPorts || !Array.isArray(configuredPorts) || configuredPorts.length === 0) {
+      console.log('🎯 Service configured for dynamic port assignment (no predefined ports)');
+      return []; // Empty array indicates dynamic-only port assignment
     }
     
     return configuredPorts.map(port => {
@@ -457,6 +458,7 @@ class ConfigurableDockerService implements DockerService {
       
       if (runningPorts.length > 0) {
         console.log(`🔍 Detected running container ports: ${runningPorts.join(', ')}`);
+        this.detectedPorts = runningPorts; // Store detected ports
         this.assignedPorts = runningPorts;
         
         // Update environment variable with detected port
@@ -468,6 +470,7 @@ class ConfigurableDockerService implements DockerService {
       } else {
         // Service not running - use dynamic port assignment (0) instead of configured ports
         console.log(`🔍 Service not running, will use dynamic ports for startup`);
+        this.detectedPorts = []; // Clear detected ports
         this.assignedPorts = [0]; // Force dynamic port assignment
         
         const serviceNameUpper = this.serviceConfig.docker.serviceName.toUpperCase();
@@ -556,10 +559,15 @@ class ConfigurableDockerService implements DockerService {
   }
 
   getServiceInfo(): ServiceInfo {
+    // Prioritize detected running ports, then assigned ports, then configured ports
+    const effectivePorts = this.detectedPorts.length > 0 ? this.detectedPorts :
+                          this.assignedPorts.length > 0 ? this.assignedPorts :
+                          (this.serviceConfig.docker.ports || []);
+    
     return {
       containerName: `${this.serviceConfig.name}-${this.serviceConfig.docker.serviceName}`,
       dockerImage: this.serviceConfig.docker.image || 'unknown',
-      ports: this.assignedPorts.length > 0 ? this.assignedPorts : (this.serviceConfig.docker.ports || []), // Use assigned ports if available
+      ports: effectivePorts,
       composeService: this.serviceConfig.docker.serviceName,
       composeFile: this.serviceConfig.docker.composeFile,
       healthCheckUrl: this.buildHealthCheckUrl(),
